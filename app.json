@@ -12,8 +12,20 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Cercle utilise ta position pour afficher les annonces près de toi.",
+          "locationWhenInUsePermission": "Cercle utilise ta position pour afficher les annonces près de toi."
+        }
+      ]
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Cercle utilise ta position pour afficher les annonces près de toi."
+      }
     },
     "android": {
       "adaptiveIcon": {
