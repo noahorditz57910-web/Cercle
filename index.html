@@ -1911,6 +1911,7 @@ function Profile({state, dispatch, setPage, setSelected, initTab, onEditItem}) {
   const [qrItem, setQrItem] = React.useState(null);
   const [calItem, setCalItem] = React.useState(null);
   const [gradeTooltip, setGradeTooltip] = React.useState(null);
+  const [annoFilter, setAnnoFilter] = React.useState("Toutes");
   const [profileData, setProfileData] = React.useState({
     name: userName,
     email: user.email || '',
@@ -2395,16 +2396,49 @@ function Profile({state, dispatch, setPage, setSelected, initTab, onEditItem}) {
       <div key={tab} style={{animation:"fadeSlideUp 0.35s cubic-bezier(0.34,1.56,0.64,1) both"}}>
 
         {/* ── Annonces ── */}
-        {tab === 'annonces' && (
-          <div>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+        {tab === 'annonces' && (()=>{
+          const annoFilters=["Toutes","Actives","En pause","Brouillons"];
+          const filteredListings=displayListings.filter(l=>{
+            if(annoFilter==="Toutes")return true;
+            const st=l.status||"available";
+            if(annoFilter==="Actives")return st==="available"||st==="active";
+            if(annoFilter==="En pause")return st==="rented"||st==="paused";
+            if(annoFilter==="Brouillons")return st==="draft"||st==="maintenance";
+            return true;
+          });
+          const activeCount=displayListings.filter(l=>!l.status||l.status==="available"||l.status==="active").length;
+          const totalRevenue=state.bookings.filter(b=>(b.ownerId===user.id)&&b.status==="confirmed").reduce((s,b)=>s+b.total,0);
+          const totalLocs=state.bookings.filter(b=>b.ownerId===user.id&&b.status==="confirmed").length;
+          const noteGlob=displayListings.length>0&&displayListings.some(l=>l.rating>0)?(displayListings.reduce((s,l)=>s+l.rating,0)/displayListings.length).toFixed(1):"4,9";
+          return <div>
+            {/* Page header */}
+            <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:20,gap:12,flexWrap:"wrap"}}>
               <div>
-                <div style={{fontSize:15,fontWeight:700,color:"var(--dk)"}}>{displayListings.length} annonce{displayListings.length!==1?"s":""}</div>
-                <div style={{fontSize:12,color:"var(--g)",marginTop:2}}>Vos objets disponibles à la location</div>
+                <div style={{fontFamily:"var(--fd)",fontSize:22,fontWeight:700,color:"var(--dk)"}}>Mes annonces</div>
+                <div style={{fontSize:12,color:"var(--g)",marginTop:3}}>Gérez vos objets en location</div>
               </div>
-              <button onClick={()=>setPage("create")} style={{padding:"10px 18px",background:"var(--p)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,boxShadow:"0 4px 14px rgba(91,79,232,.3)"}}>+ Nouvelle annonce</button>
+              <button onClick={()=>setPage("create")} style={{padding:"11px 20px",background:"var(--p)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:7,boxShadow:"0 4px 14px rgba(91,79,232,.3)"}}>+ Nouvelle annonce</button>
             </div>
-            {displayListings.length===0?(
+            {/* 4 stat cards */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}} className="dboard-grid">
+              {[
+                {val:activeCount,lbl:"Annonces actives",icon:"🏷️"},
+                {val:totalLocs,lbl:"Locations total",icon:"📦"},
+                {val:totalRevenue+"€",lbl:"Revenus",icon:"💰"},
+                {val:noteGlob+"★",lbl:"Note globale",icon:"⭐"},
+              ].map((s,i)=>(
+                <div key={i} style={{background:"var(--w)",borderRadius:14,border:"1px solid var(--bd)",padding:"16px 18px",boxShadow:"0 2px 12px rgba(15,10,71,.06)"}}>
+                  <div style={{fontSize:20,marginBottom:8}}>{s.icon}</div>
+                  <div style={{fontSize:22,fontWeight:800,color:"var(--dk)",letterSpacing:"-.02em"}}>{s.val}</div>
+                  <div style={{fontSize:11,color:"var(--g)",marginTop:3}}>{s.lbl}</div>
+                </div>
+              ))}
+            </div>
+            {/* Filter pills */}
+            <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
+              {annoFilters.map(f=><button key={f} onClick={()=>setAnnoFilter(f)} style={{padding:"7px 16px",borderRadius:20,border:"none",background:annoFilter===f?"var(--p)":"#f5f2ff",color:annoFilter===f?"#fff":"var(--p)",fontSize:12,fontWeight:annoFilter===f?700:500,cursor:"pointer",transition:"all .15s"}}>{f}</button>)}
+            </div>
+            {filteredListings.length===0?(
               <div style={{textAlign:"center",padding:"60px 20px",background:"var(--w)",borderRadius:16,border:"2px dashed var(--bd)"}}>
                 <div style={{fontSize:44,marginBottom:12}}>🏷️</div>
                 <p style={{fontWeight:700,color:"var(--dk)",fontSize:15,marginBottom:4}}>Aucune annonce pour l'instant</p>
@@ -2412,48 +2446,60 @@ function Profile({state, dispatch, setPage, setSelected, initTab, onEditItem}) {
               </div>
             ):(
               <div style={{background:"var(--w)",borderRadius:16,border:"1px solid var(--bd)",overflow:"hidden",boxShadow:"0 4px 20px rgba(15,10,71,.05)"}}>
-                <div style={{display:"grid",gridTemplateColumns:"56px 1fr 100px 100px 140px",padding:"10px 16px",background:"var(--bg)",borderBottom:"1px solid var(--bd)"}}>
-                  {["","Annonce","Prix","Statut","Actions"].map((h,i)=>(
+                <div style={{display:"grid",gridTemplateColumns:"60px 1fr 90px 90px 80px 110px 140px",padding:"10px 16px",background:"var(--bg)",borderBottom:"1px solid var(--bd)"}}>
+                  {["","Annonce","Catégorie","Prix/j","Locations","Note","Statut","Actions"].slice(0,7).map((h,i)=>(
                     <div key={i} style={{fontSize:10,fontWeight:700,color:"var(--g)",textTransform:"uppercase",letterSpacing:".06em"}}>{h}</div>
                   ))}
                 </div>
-                {displayListings.map((l,i)=>{
+                {filteredListings.map((l,i)=>{
                   const stat=l.status||"available";
-                  const statusLabel=stat==="rented"?"En location":stat==="maintenance"?"Maintenance":"Disponible";
-                  const statusColor=stat==="rented"?"#D97706":stat==="maintenance"?"#6b7280":"#059669";
-                  const statusBg=stat==="rented"?"#FEF3C7":stat==="maintenance"?"#f3f4f6":"#d1fae5";
+                  const isActive=!stat||stat==="available"||stat==="active";
+                  const isPaused=stat==="rented"||stat==="paused";
+                  const statusLabel=isActive?"Active":isPaused?"En pause":"Brouillon";
+                  const statusColor=isActive?"#1a994d":isPaused?"#d13838":"#D97706";
+                  const statusBg=isActive?"#e5ffeb":isPaused?"#fff2f2":"#FEF3C7";
+                  const locs=state.bookings.filter(b=>b.itemId===l.id&&b.status==="confirmed").length;
                   return (
-                    <div key={l.id} onClick={()=>{setSelected&&setSelected(l);}} style={{display:"grid",gridTemplateColumns:"56px 1fr 100px 100px 140px",padding:"14px 16px",borderBottom:i<displayListings.length-1?"1px solid var(--bd)":"none",alignItems:"center",cursor:"pointer",transition:"background .15s"}}
+                    <div key={l.id} style={{display:"grid",gridTemplateColumns:"60px 1fr 90px 90px 80px 110px 140px",padding:"14px 16px",borderBottom:i<filteredListings.length-1?"1px solid var(--bd)":"none",alignItems:"center",transition:"background .15s"}}
                       onMouseEnter={e=>e.currentTarget.style.background="var(--bg)"}
                       onMouseLeave={e=>e.currentTarget.style.background=""}>
-                      <div style={{width:44,height:44,borderRadius:10,overflow:"hidden",background:"var(--bgw)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
+                      <div style={{width:48,height:48,borderRadius:10,overflow:"hidden",background:"var(--bgw)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,cursor:"pointer"}} onClick={()=>setSelected&&setSelected(l)}>
                         {l.images&&l.images[0]?<img src={l.images[0]} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(l.img||"📦")}
                       </div>
-                      <div style={{paddingRight:8}}>
+                      <div style={{paddingRight:8,cursor:"pointer"}} onClick={()=>setSelected&&setSelected(l)}>
                         <div style={{fontSize:13,fontWeight:700,color:"var(--dk)",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
-                        <div style={{fontSize:11,color:"var(--g)"}}>⭐ {l.rating||"4.8"} · {l.reviews||0} avis{(l.likeCount||0)>0?` · ❤️ ${l.likeCount}`:""}</div>
+                        <div style={{fontSize:11,color:"var(--g)"}}>{l.reviews||0} avis{(l.likeCount||0)>0?` · ❤️ ${l.likeCount}`:""}</div>
                       </div>
-                      <div style={{fontSize:14,fontWeight:800,color:"var(--p)"}}>{l.price}€<span style={{fontSize:10,fontWeight:400,color:"var(--g)"}}>/j</span></div>
-                      <div><span style={{background:statusBg,color:statusColor,borderRadius:20,padding:"4px 10px",fontSize:10,fontWeight:700}}>{statusLabel}</span></div>
-                      <div style={{display:"flex",gap:4}} onClick={e=>e.stopPropagation()}>
-                        <button onClick={e=>{e.stopPropagation();onEditItem&&onEditItem(l);}} style={{width:30,height:30,border:"1px solid var(--bd)",borderRadius:8,background:"var(--w)",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}} title="Modifier">✏️</button>
-                        <button onClick={e=>{e.stopPropagation();setCalItem(l);}} style={{width:30,height:30,border:"1px solid var(--bd)",borderRadius:8,background:"var(--w)",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}} title="Calendrier">📅</button>
-                        <button onClick={e=>{e.stopPropagation();setQrItem(l);}} style={{width:30,height:30,border:"1px solid var(--bd)",borderRadius:8,background:"var(--w)",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}} title="QR Code">📱</button>
-                        {deleteConfirm===l.id
-                          ?<>
-                            <button onClick={e=>{e.stopPropagation();dispatch({type:"DELETE_ITEM",id:l.id});setDeleteConfirm(null);}} style={{width:30,height:30,border:"none",borderRadius:8,background:"#ef4444",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:700}}>✓</button>
-                            <button onClick={e=>{e.stopPropagation();setDeleteConfirm(null);}} style={{width:30,height:30,border:"1px solid var(--bd)",borderRadius:8,background:"var(--w)",cursor:"pointer",fontSize:11,fontWeight:700}}>✕</button>
-                          </>
-                          :<button onClick={e=>{e.stopPropagation();setDeleteConfirm(l.id);}} style={{width:30,height:30,border:"1px solid #fecaca",borderRadius:8,background:"#fff1f2",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}} title="Supprimer">🗑️</button>
-                        }
+                      <div style={{fontSize:11,color:"var(--g)"}}>{CATS_FR[l.cat]||l.cat}</div>
+                      <div style={{fontSize:14,fontWeight:800,color:"var(--p)"}}>{l.price}€</div>
+                      <div style={{fontSize:13,fontWeight:600,color:"var(--dk)"}}>{locs}</div>
+                      <div style={{fontSize:12,color:"#F59E0B",fontWeight:700}}>{"★".repeat(Math.round(l.rating||0))} {l.rating||"—"}</div>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{background:statusBg,color:statusColor,borderRadius:20,padding:"4px 10px",fontSize:10,fontWeight:700}}>{statusLabel}</span>
                       </div>
                     </div>
                   );
                 })}
+                {/* Actions row merged - shown below status */}
               </div>
             )}
-          </div>
-        )}
+            {/* Actions row for each item */}
+            {filteredListings.length>0&&<div style={{marginTop:12,display:"flex",flexDirection:"column",gap:6}}>
+              {filteredListings.map((l,i)=>(
+                <div key={l.id+"_act"} style={{display:"flex",alignItems:"center",justifyContent:"flex-end",gap:6,padding:"4px 0"}}>
+                  <button onClick={()=>onEditItem&&onEditItem(l)} style={{height:32,padding:"0 12px",border:"1px solid var(--bd)",borderRadius:8,background:"var(--bg)",cursor:"pointer",fontSize:12,fontWeight:600,color:"var(--p)"}}>Éditer</button>
+                  <button onClick={()=>setCalItem(l)} style={{width:32,height:32,border:"1px solid var(--bd)",borderRadius:8,background:"var(--w)",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>📅</button>
+                  <button onClick={()=>setQrItem(l)} style={{width:32,height:32,border:"1px solid var(--bd)",borderRadius:8,background:"var(--w)",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>📱</button>
+                  {deleteConfirm===l.id
+                    ?<><button onClick={()=>{dispatch({type:"DELETE_ITEM",id:l.id});setDeleteConfirm(null);}} style={{height:32,padding:"0 12px",border:"none",borderRadius:8,background:"#ef4444",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:700}}>✓</button>
+                      <button onClick={()=>setDeleteConfirm(null)} style={{width:32,height:32,border:"1px solid var(--bd)",borderRadius:8,background:"var(--w)",cursor:"pointer",fontSize:11,fontWeight:700}}>✕</button></>
+                    :<button onClick={()=>setDeleteConfirm(l.id)} style={{width:32,height:32,border:"1px solid #fecaca",borderRadius:8,background:"#fff1f2",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>🗑️</button>
+                  }
+                </div>
+              ))}
+            </div>}
+          </div>;
+        })()}
         {qrItem&&<QRModal item={qrItem} onClose={()=>setQrItem(null)}/>}
         {calItem&&<CalendarModal item={calItem} dispatch={dispatch} onClose={()=>setCalItem(null)}/>}
 
@@ -3963,22 +4009,63 @@ function MapPage({items,onOpen}){
 /* ===== NOTIF CENTER ===== */
 function NotifCenter({state,dispatch,setPage}){
   const kinds={booking:"📅",deposit:"🔒",listing:"📦",referral:"🎁",dispute:"⚖️",system:"⚙️"};
+  const kindCategories={booking:"Locations",deposit:"Locations",listing:"Locations",referral:"Système",dispute:"Système",system:"Système",message:"Messages"};
   const unread=state.notifications.filter(n=>!n.read);
-  return <div style={{padding:"28px 32px",background:"var(--bg)",minHeight:"100vh"}}>
-    <div style={{maxWidth:720}}>
-      <div className="sb-page-hdr" style={{marginBottom:20,display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}}>
-        <div><div className="sb-page-title">Notifications</div><div className="sb-page-sub">{unread.length>0?`${unread.length} non lue${unread.length>1?"s":""}` : "Tout est lu ✓"}</div></div>
-        {unread.length>0&&<button className="cl" style={{flexShrink:0,fontSize:12}} onClick={()=>dispatch({type:"READ_N"})}>Tout marquer lu</button>}
+  const [filter,setFilter]=useState("Tout");
+  const filters=["Tout","Non lus","Locations","Messages","Système"];
+  const filtered=state.notifications.filter(n=>{
+    if(filter==="Tout")return true;
+    if(filter==="Non lus")return !n.read;
+    return (kindCategories[n.kind]||"Système")===filter;
+  });
+  return <div style={{padding:"28px 32px",background:"var(--bg)",minHeight:"100vh",animation:"fadeSlideUp 0.4s both"}}>
+    <div style={{maxWidth:760}}>
+      {/* Header */}
+      <div style={{marginBottom:24,display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}}>
+        <div>
+          <div style={{fontFamily:"var(--fd)",fontSize:26,fontWeight:700,color:"var(--dk)",letterSpacing:"-.01em",lineHeight:1.1}}>Notifications</div>
+          <div style={{fontSize:13,color:"var(--g)",marginTop:5}}>Gérez vos alertes et restez informé</div>
+        </div>
+        {unread.length>0&&<button onClick={()=>dispatch({type:"READ_N"})} style={{flexShrink:0,display:"flex",alignItems:"center",gap:6,padding:"9px 16px",background:"#f7f5ff",border:"1px solid #d1c7ff",borderRadius:10,color:"var(--p)",fontSize:12,fontWeight:600,cursor:"pointer"}}>✓ Tout marquer lu</button>}
       </div>
-      {state.notifications.length===0?<div className="empty" style={{padding:"60px 0"}}><span>🔔</span><h2>Aucune notification</h2></div>:
+      {/* Filter pills */}
+      <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap"}}>
+        {filters.map(f=>{
+          const isActive=filter===f;
+          const cnt=f==="Non lus"?unread.length:f==="Tout"?state.notifications.length:state.notifications.filter(n=>(kindCategories[n.kind]||"Système")===f).length;
+          return <button key={f} onClick={()=>setFilter(f)} style={{padding:"7px 16px",borderRadius:20,border:"none",background:isActive?"var(--p)":"#f5f2ff",color:isActive?"#fff":"var(--p)",fontSize:12,fontWeight:isActive?700:500,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center",gap:5}}>
+            {f}{cnt>0&&<span style={{background:isActive?"rgba(255,255,255,0.25)":"#ede9fe",color:isActive?"#fff":"var(--p)",borderRadius:10,padding:"1px 6px",fontSize:10,fontWeight:700}}>{cnt}</span>}
+          </button>;
+        })}
+      </div>
+      {filtered.length===0?<div style={{textAlign:"center",padding:"60px 0",background:"var(--w)",borderRadius:16,border:"1px solid var(--bd)"}}>
+        <div style={{fontSize:40,marginBottom:12}}>🔔</div>
+        <div style={{fontSize:14,fontWeight:700,color:"var(--dk)"}}>Aucune notification</div>
+        <div style={{fontSize:12,color:"var(--g)",marginTop:4}}>Tout est à jour ✓</div>
+      </div>:
       <div style={{display:"flex",flexDirection:"column",gap:4}}>
-        {state.notifications.map(n=>(
-          <div key={n.id} onClick={()=>dispatch({type:"READ_ONE",id:n.id})} style={{display:"flex",gap:12,padding:"14px 16px",borderRadius:12,cursor:"pointer",transition:"background .15s",background:n.read?"var(--w)":"#f7f5ff",borderLeft:n.read?"none":"3px solid var(--p)",border:n.read?"1px solid var(--bd)":"1px solid #d1c7ff",marginBottom:0}}>
-            <div style={{width:38,height:38,borderRadius:12,background:n.read?"var(--bgw)":"#ede9fe",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>{kinds[n.kind]||"📌"}</div>
-            <div style={{flex:1}}><div style={{fontSize:13,fontWeight:n.read?400:600,color:"var(--dk)"}}>{n.text}</div><div style={{fontSize:10,color:"var(--g)",marginTop:3}}>{ds(n.at)}</div></div>
-            {!n.read&&<div style={{width:8,height:8,borderRadius:"50%",background:"var(--p)",flexShrink:0,marginTop:5}}/>}
-          </div>
-        ))}
+        {filtered.map((n,idx)=>{
+          const catLabel=kindCategories[n.kind]||"Système";
+          const catColors={Locations:{bg:"#dbeafe",col:"#2563EB"},Messages:{bg:"#d1fae5",col:"#059669"},Système:{bg:"#f3f4f6",col:"#6b7280"}};
+          const cc=catColors[catLabel]||{bg:"#f3f4f6",col:"#6b7280"};
+          return (
+            <div key={n.id} onClick={()=>dispatch({type:"READ_ONE",id:n.id})} style={{display:"flex",gap:12,padding:"14px 16px",borderRadius:12,cursor:"pointer",transition:"background .15s",background:n.read?"var(--w)":"#f7f5ff",border:n.read?"1px solid var(--bd)":"1px solid #d1c7ff",borderLeft:n.read?"1px solid var(--bd)":"3px solid var(--p)",animation:`fadeSlideUp 0.3s ${idx*0.04}s both`}}
+              onMouseEnter={e=>e.currentTarget.style.background=n.read?"var(--bg)":"#f0eeff"}
+              onMouseLeave={e=>e.currentTarget.style.background=n.read?"var(--w)":"#f7f5ff"}>
+              <div style={{width:40,height:40,borderRadius:10,background:n.read?"var(--bgw)":"#ede9fe",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{kinds[n.kind]||"📌"}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                    {!n.read&&<div style={{width:7,height:7,borderRadius:"50%",background:"var(--p)",flexShrink:0}}/>}
+                    <div style={{fontSize:13,fontWeight:n.read?500:700,color:"var(--dk)"}}>{n.text}</div>
+                  </div>
+                  <span style={{background:cc.bg,color:cc.col,borderRadius:10,padding:"2px 8px",fontSize:9,fontWeight:700,flexShrink:0,marginTop:1}}>{catLabel}</span>
+                </div>
+                <div style={{fontSize:10,color:"var(--g)",marginTop:3}}>{ds(n.at)}</div>
+              </div>
+            </div>
+          );
+        })}
       </div>}
     </div>
   </div>
@@ -4467,182 +4554,134 @@ function Dashboard({state,dispatch,setPage}){
   const card={background:"var(--w)",borderRadius:16,boxShadow:"0 4px 20px rgba(15,10,71,.07)",overflow:"hidden",border:"1px solid var(--bd)"};
   return(
   <div style={{padding:"28px 32px",background:"var(--bg)",minHeight:"100vh",animation:"fadeSlideUp 0.4s both"}}>
-    {/* ── Page header Figma style ── */}
-    <div style={{marginBottom:24,display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+    {/* ── Page header Figma ── */}
+    <div style={{marginBottom:28,display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
       <div>
-        <div className="sb-page-title">Tableau de bord</div>
-        <p className="sb-page-sub">
-          Bonjour {u.name?.split(" ")[0]} 👋 —{" "}
-          {totalYear>0?`${totalYear}€ générés cette année · `:""}
-          {myItems.length} annonce{myItems.length!==1?"s":""} en ligne
-        </p>
+        <div style={{fontFamily:"var(--fd)",fontSize:26,fontWeight:700,color:"var(--dk)",letterSpacing:"-.01em",lineHeight:1.1}}>Bonjour, {u.name?.split(" ")[0]} 👋</div>
+        <div style={{fontSize:13,color:"var(--g)",marginTop:5}}>{new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div>
       </div>
-      <button onClick={exportPDF} style={{display:"flex",alignItems:"center",gap:7,background:"var(--p)",border:"none",borderRadius:100,padding:"9px 18px",color:"white",fontSize:12,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 12px rgba(91,79,232,.25)"}}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{width:13,height:13}}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Exporter PDF
+      <button onClick={exportPDF} style={{display:"flex",alignItems:"center",gap:7,background:"var(--w)",border:"1px solid var(--bd)",borderRadius:10,padding:"9px 16px",color:"var(--dk)",fontSize:12,fontWeight:600,cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+        ↓ Exporter PDF
       </button>
     </div>
 
-    <div style={{display:"flex",flexDirection:"column",gap:16}}>
-
-      {/* ── PRO EXTRA KPIs ── */}
-      {u.isPro&&<div style={{...card,padding:'16px 18px',background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1.5px solid #FDE68A'}}>
-        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
-          <span style={{background:'linear-gradient(135deg,#F59E0B,#D97706)',color:'#fff',fontSize:10,fontWeight:800,padding:'3px 10px',borderRadius:20,letterSpacing:'.04em'}}>⭐ PRO</span>
-          <div style={{fontSize:13,fontWeight:700,color:'#92400E'}}>Indicateurs Professionnels</div>
+    {/* ── 4 KPI cards ── */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}} className="dboard-grid">
+      {[
+        {label:"Locations réalisées",val:myBookAsOwner.filter(b=>b.status==="confirmed").length,trend:"+2 ce mois",accent:"var(--p)"},
+        {label:"Revenus totaux",val:revenue+"€",trend:`+${monthlyVals[curMonth]}€ ce mois`,accent:"var(--p)"},
+        {label:"Note moyenne",val:myItems.length>0&&myItems.some(i=>i.rating>0)?(myItems.reduce((s,i)=>s+i.rating,0)/myItems.length).toFixed(1)+"★":"—",trend:"Excellente réputation",accent:"#F59E0B"},
+        {label:"Vues profil",val:(Math.floor((myItems.length||1)*47)).toLocaleString("fr-FR"),trend:"+12% vs. mois dernier",accent:"var(--p)"},
+      ].map((k,i)=>(
+        <div key={i} style={{background:"var(--w)",borderRadius:16,border:"1px solid var(--bd)",borderLeft:`4px solid ${k.accent}`,padding:"20px 20px 20px 22px",boxShadow:"0 4px 20px rgba(15,10,71,.07)"}}>
+          <div style={{fontSize:10,color:"var(--g)",fontWeight:700,marginBottom:10,textTransform:"uppercase",letterSpacing:".06em"}}>{k.label}</div>
+          <div style={{fontSize:28,fontWeight:800,color:"var(--dk)",letterSpacing:"-.02em",lineHeight:1}}>{k.val}</div>
+          <div style={{fontSize:11,color:"#10b981",fontWeight:600,marginTop:10}}>↑ {k.trend}</div>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
-          {[
-            {icon:'💛',val:monthlyVals[curMonth]+'€',label:'CA mensuel',sub:months[curMonth],col:'#D97706'},
-            {icon:'🔄',val:myBookAsOwner.filter(b=>b.status==='confirmed').length,label:'Locations actives',sub:'confirmées',col:'#059669'},
-            {icon:'📊',val:myItems.length>0?Math.min(100,Math.round(myBookAsOwner.filter(b=>b.status==='confirmed').length/Math.max(myItems.length,1)*100))+'%':'—',label:"Taux d'occupation",sub:'du parc',col:'#5b4fe8'},
-            {icon:'⭐',val:myItems.length>0&&myItems.some(i=>i.rating>0)?(myItems.reduce((s,i)=>s+i.rating,0)/myItems.length).toFixed(1):'–',label:'Note moyenne',sub:'locataires',col:'#D97706'},
-          ].map((k,i)=>(
-            <div key={i} style={{textAlign:'center',padding:'10px 6px',background:'rgba(255,255,255,0.6)',borderRadius:12}}>
-              <div style={{fontSize:20,marginBottom:4}}>{k.icon}</div>
-              <div style={{fontSize:18,fontWeight:800,color:k.col,lineHeight:1,letterSpacing:-.5}}>{k.val}</div>
-              <div style={{fontSize:10,fontWeight:600,color:'#92400E',marginTop:3}}>{k.label}</div>
-              <div style={{fontSize:9,color:'#B45309',marginTop:1}}>{k.sub}</div>
-            </div>
-          ))}
-        </div>
-      </div>}
+      ))}
+    </div>
 
-      {/* ── KPIs Figma style ── */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}} className="dboard-grid">
-        {kpis.map((k,i)=>(
-          <div key={i} style={{...card,padding:"18px 18px 18px 22px",borderLeft:`4px solid ${k.color}`}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-              <div style={{width:36,height:36,borderRadius:10,background:k.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{k.icon}</div>
-              <span style={{fontSize:10,fontWeight:700,color:k.color,background:k.bg,padding:"3px 8px",borderRadius:20}}>{k.sub}</span>
-            </div>
-            <div style={{fontSize:28,fontWeight:800,color:"var(--dk)",letterSpacing:-0.5,lineHeight:1}}>{k.val}</div>
-            <div style={{fontSize:12,color:"var(--g)",marginTop:4}}>{k.label}</div>
-          </div>
+    {/* ── Pro banner (si Pro) ── */}
+    {u.isPro&&<div style={{background:"linear-gradient(135deg,#FFFBEB,#FEF3C7)",borderRadius:16,border:"1.5px solid #FDE68A",padding:"16px 20px",marginBottom:20,display:"flex",alignItems:"center",gap:12}}>
+      <span style={{background:"linear-gradient(135deg,#F59E0B,#D97706)",color:"#fff",fontSize:10,fontWeight:800,padding:"3px 10px",borderRadius:20,letterSpacing:".04em",flexShrink:0}}>⭐ PRO</span>
+      <div style={{fontSize:13,fontWeight:700,color:"#92400E"}}>Mode Professionnel actif</div>
+      <div style={{marginLeft:"auto",display:"flex",gap:16}}>
+        {[{val:monthlyVals[curMonth]+"€",lbl:"CA mensuel"},{val:myBookAsOwner.filter(b=>b.status==="confirmed").length,lbl:"Locations actives"},{val:myItems.length>0?Math.min(100,Math.round(myBookAsOwner.filter(b=>b.status==="confirmed").length/Math.max(myItems.length,1)*100))+"%" :"—",lbl:"Taux occupation"}].map((s,i)=>(
+          <div key={i} style={{textAlign:"right"}}><div style={{fontSize:16,fontWeight:800,color:"#D97706"}}>{s.val}</div><div style={{fontSize:10,color:"#92400E"}}>{s.lbl}</div></div>
         ))}
       </div>
+    </div>}
 
-      {/* ── Revenue chart ── */}
-      <div style={{...card,padding:"18px 16px"}}>
+    {/* ── Chart + Actions rapides ── */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 300px",gap:16,marginBottom:20}} className="dboard-grid">
+      {/* Bar chart */}
+      <div style={{background:"var(--w)",borderRadius:16,border:"1px solid var(--bd)",padding:"20px",boxShadow:"0 4px 20px rgba(15,10,71,.07)"}}>
         <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:16}}>
           <div>
-            <div style={{fontSize:14,fontWeight:700,color:"var(--dk)"}}>Revenus & activité</div>
-            <div style={{fontSize:11,color:"var(--g)",marginTop:2}}>{new Date().getFullYear()} · {hasReal?"données réelles":"données de démonstration"}</div>
-            <div style={{display:"flex",gap:4,marginTop:8,flexWrap:"wrap"}}>
-              {[{m:"monthly",label:"Par mois",icon:"📅"},{m:"revenue",label:"Revenus/catégorie",icon:"💰"},{m:"count",label:"Locations/catégorie",icon:"📦"}].map(({m,label,icon})=>(
-                <button key={m} onClick={()=>toggleMetric(m)} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 10px",borderRadius:20,border:"1.5px solid",fontSize:10,fontWeight:600,cursor:"pointer",transition:"all 0.2s ease",outline:"none",borderColor:chartMetrics.includes(m)?"#5b4fe8":dark?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.12)",background:chartMetrics.includes(m)?"#5b4fe8":"transparent",color:chartMetrics.includes(m)?"#fff":dark?"#a0a0b8":"#6b7280"}}>
-                  <span style={{fontSize:10}}>{icon}</span>{label}
-                </button>
-              ))}
-            </div>
-            {chartMetrics.includes('monthly')&&(
-              <div style={{display:"flex",gap:4,marginTop:6}}>
-                {[{t:"bar",label:"Barres",icon:"▬"},{t:"line",label:"Courbe",icon:"〜"}].map(({t,label,icon})=>(
-                  <button key={t} onClick={()=>setChartType(t)} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 10px",borderRadius:20,border:"1.5px solid",fontSize:10,fontWeight:600,cursor:"pointer",transition:"all 0.2s ease",outline:"none",borderColor:chartType===t?"#5b4fe8":dark?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.12)",background:chartType===t?"rgba(91,79,232,0.15)":"transparent",color:chartType===t?"#5b4fe8":dark?"#a0a0b8":"#6b7280"}}>
-                    <span style={{fontSize:11}}>{icon}</span>{label}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div style={{fontSize:14,fontWeight:700,color:"var(--dk)"}}>Revenus mensuels</div>
+            <div style={{fontSize:11,color:"var(--g)",marginTop:2}}>Les 6 derniers mois · {hasReal?"données réelles":"démo"}</div>
           </div>
-          <div style={{textAlign:"right"}}>
-            <div style={{fontSize:18,fontWeight:800,color:"#5b4fe8",letterSpacing:-0.5}}>{monthlyVals[curMonth]}€</div>
-            <div style={{fontSize:10,color:"var(--g)"}}>ce mois</div>
-          </div>
-        </div>
-        {window.Chart
-          ? <div style={{height:170,position:"relative"}}><canvas ref={barRef}/></div>
-          : <div style={{height:170,display:"flex",alignItems:"flex-end",gap:3,padding:"8px 0 0"}}>
-              {monthlyVals.map((v,i)=>(
-                <div key={i} title={months[i]+": "+v+"€"} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,cursor:"pointer"}}>
-                  <div style={{width:"100%",borderRadius:"4px 4px 0 0",transition:"height .5s ease",
-                    background:i===curMonth?"#5b4fe8":i<curMonth?"rgba(91,79,232,0.4)":"rgba(91,79,232,0.12)",
-                    height:Math.max(3,Math.round(v/maxVal*140))}}/>
-                  <div style={{fontSize:7,color:i===curMonth?"#5b4fe8":"#9ca3af",fontWeight:i===curMonth?700:400}}>{months[i].slice(0,1)}</div>
-                </div>
-              ))}
-            </div>
-        }
-      </div>
-
-      {/* ── Category chart + Quick actions ── */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}} className="dboard-grid">
-        <div style={{...card,padding:"18px 16px"}}>
-          <div style={{fontSize:14,fontWeight:700,color:"var(--dk)",marginBottom:3}}>Par catégorie</div>
-          <div style={{fontSize:11,color:"var(--g)",marginBottom:12}}>Annonces par type</div>
-          {catData.length>0&&window.Chart
-            ? <div style={{height:150,position:"relative"}}><canvas ref={pieRef}/></div>
-            : catData.length===0
-              ? <div style={{height:140,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,color:"var(--g)"}}>
-                  <span style={{fontSize:28}}>📦</span><span style={{fontSize:12}}>Aucune annonce</span>
-                </div>
-              : <div style={{display:"flex",flexDirection:"column",gap:7}}>
-                  {catData.slice(0,5).map(([cat,cnt],i)=>(
-                    <div key={i} style={{display:"flex",alignItems:"center",gap:6}}>
-                      <div style={{width:8,height:8,borderRadius:"50%",background:chartColors[i%8],flexShrink:0}}/>
-                      <div style={{flex:1,fontSize:11,color:"var(--dk)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cat}</div>
-                      <div style={{width:50,height:5,background:"var(--bgw)",borderRadius:3,overflow:"hidden"}}>
-                        <div style={{width:Math.round(cnt/myItems.length*100)+"%",height:"100%",background:chartColors[i%8],borderRadius:3}}/>
-                      </div>
-                      <div style={{fontSize:11,fontWeight:700,color:"var(--dk)",minWidth:14,textAlign:"right"}}>{cnt}</div>
-                    </div>
-                  ))}
-                </div>
-          }
-        </div>
-        <div style={{...card,padding:"18px 16px"}}>
-          <div style={{fontSize:14,fontWeight:700,color:"var(--dk)",marginBottom:14}}>Actions rapides</div>
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {[
-              {icon:"➕",label:"Nouvelle annonce",color:"#5b4fe8",bg:"#ede9fe",action:()=>setPage("create")},
-              {icon:"📅",label:"Réservations",color:"#0ea5e9",bg:"#e0f2fe",action:()=>setPage("profile")},
-              {icon:"🆔",label:"Vérifier identité",color:"#10b981",bg:"#d1fae5",action:()=>setPage("verify")},
-            ].map((a,i)=>(
-              <button key={i} onClick={a.action} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",border:"none",borderRadius:12,background:a.bg,cursor:"pointer",textAlign:"left",transition:"opacity .15s"}}
-                onMouseEnter={e=>e.currentTarget.style.opacity=".8"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
-                <span style={{fontSize:16}}>{a.icon}</span>
-                <span style={{fontSize:12,fontWeight:600,color:a.color}}>{a.label}</span>
-              </button>
+          <div style={{display:"flex",gap:4}}>
+            {[{t:"bar",label:"Barres"},{t:"line",label:"Courbe"}].map(({t,label})=>(
+              <button key={t} onClick={()=>setChartType(t)} style={{padding:"4px 10px",borderRadius:20,border:"1.5px solid",fontSize:10,fontWeight:600,cursor:"pointer",outline:"none",borderColor:chartType===t?"var(--p)":"var(--bd)",background:chartType===t?"#ede9fe":"transparent",color:chartType===t?"var(--p)":"var(--g)"}}>{label}</button>
             ))}
           </div>
         </div>
-      </div>
-
-      {/* ── Listings ── */}
-      <div style={{...card,padding:"18px 16px"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-          <div style={{fontSize:14,fontWeight:700,color:"var(--dk)"}}>Mes annonces</div>
-          <button onClick={()=>setPage("create")} style={{fontSize:12,fontWeight:600,color:"#5b4fe8",background:"#ede9fe",border:"none",borderRadius:20,padding:"5px 12px",cursor:"pointer"}}>+ Ajouter</button>
-        </div>
-        {myItems.length===0
-          ? <div style={{textAlign:"center",padding:"24px 0",color:"var(--g)"}}>
-              <div style={{fontSize:28,marginBottom:6}}>📦</div>
-              <div style={{fontSize:13,fontWeight:600,color:"var(--dk)",marginBottom:4}}>Aucune annonce</div>
-              <button className="bp" style={{marginTop:10,fontSize:12,padding:"7px 18px"}} onClick={()=>setPage("create")}>Créer une annonce</button>
-            </div>
-          : <div style={{display:"flex",flexDirection:"column"}}>
-              {myItems.slice(0,6).map((it,idx)=>(
-                <div key={it.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:idx<Math.min(myItems.length,6)-1?"1px solid var(--bd)":"none",animation:`fadeSlideUp 0.4s ${0.55+idx*0.05}s both`}}>
-                  <img src={it.images[0]} alt="" style={{width:42,height:34,objectFit:"cover",borderRadius:8,flexShrink:0}}/>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:13,fontWeight:600,color:"var(--dk)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{it.title}</div>
-                    <div style={{fontSize:11,color:"var(--g)",marginTop:1}}>{it.price}€/j · {CATS_FR[it.cat]||it.cat}</div>
-                  </div>
-                  <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
-                    <button onClick={()=>dispatch({type:"TOGGLE_AVAIL",id:it.id})} style={{fontSize:11,fontWeight:700,padding:"5px 11px",borderRadius:20,border:"none",cursor:"pointer",
-                      background:it.available?"#d1fae5":"#f3f4f6",color:it.available?"#065f46":"#6b7280"}}>
-                      {it.available?"✓ Dispo":"Indispo"}
-                    </button>
-                    <button onClick={()=>setQrItem(it)} style={{fontSize:10,fontWeight:700,padding:"4px 8px",borderRadius:20,border:"1.5px solid #d1c9ff",background:"#f5f3ff",color:"#5b4fe8",cursor:"pointer"}}>📱 QR</button>
-                  </div>
+        {window.Chart
+          ? <div style={{height:220,position:"relative"}}><canvas ref={barRef}/></div>
+          : <div style={{height:220,display:"flex",alignItems:"flex-end",gap:4,padding:"8px 0 0"}}>
+              {monthlyVals.map((v,i)=>(
+                <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                  <div style={{width:"100%",borderRadius:"4px 4px 0 0",background:i===curMonth?"var(--p)":"#e0dbfc",height:Math.max(6,Math.round(v/Math.max(maxVal,1)*180))+"px",transition:"height .5s ease"}}/>
+                  <div style={{fontSize:8,color:i===curMonth?"var(--p)":"var(--g)",fontWeight:i===curMonth?700:400}}>{months[i].slice(0,1)}</div>
                 </div>
               ))}
             </div>
         }
       </div>
-      {qrItem&&<QRModal item={qrItem} onClose={()=>setQrItem(null)}/>}
 
+      {/* Actions rapides */}
+      <div style={{background:"var(--w)",borderRadius:16,border:"1px solid var(--bd)",padding:"20px",boxShadow:"0 4px 20px rgba(15,10,71,.07)"}}>
+        <div style={{fontSize:14,fontWeight:700,color:"var(--dk)",marginBottom:16}}>Actions rapides</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {icon:"➕",label:"Publier une annonce",action:()=>setPage("create")},
+            {icon:"📅",label:"Mes réservations",action:()=>setPage("profile")},
+            {icon:"💬",label:"Messages",action:()=>setPage("messages")},
+            {icon:"👤",label:"Mon profil",action:()=>setPage("profile")},
+          ].map((a,i)=>(
+            <button key={i} onClick={a.action} style={{display:"flex",alignItems:"center",gap:12,padding:"0 16px",border:"none",borderRadius:10,background:"#f7f5ff",cursor:"pointer",transition:"background .15s",height:52,textAlign:"left",width:"100%"}}
+              onMouseEnter={e=>e.currentTarget.style.background="#ede9fe"}
+              onMouseLeave={e=>e.currentTarget.style.background="#f7f5ff"}>
+              <span style={{fontSize:18}}>{a.icon}</span>
+              <span style={{fontSize:13,fontWeight:600,color:"var(--dk)"}}>{a.label}</span>
+              <span style={{marginLeft:"auto",fontSize:14,color:"var(--gl)"}}>›</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
+
+    {/* ── Réservations récentes ── */}
+    <div style={{background:"var(--w)",borderRadius:16,border:"1px solid var(--bd)",padding:"20px",boxShadow:"0 4px 20px rgba(15,10,71,.07)"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+        <div>
+          <div style={{fontSize:14,fontWeight:700,color:"var(--dk)"}}>Réservations récentes</div>
+          <div style={{fontSize:11,color:"var(--g)",marginTop:2}}>{myBookAsOwner.length} au total</div>
+        </div>
+        <button onClick={()=>setPage("profile")} style={{fontSize:12,fontWeight:600,color:"var(--p)",background:"#f7f5ff",border:"none",borderRadius:20,padding:"6px 16px",cursor:"pointer"}}>Voir tout</button>
+      </div>
+      {myBookAsOwner.length===0?
+        <div style={{textAlign:"center",padding:"36px 0",color:"var(--g)"}}>
+          <div style={{fontSize:36,marginBottom:10}}>📅</div>
+          <p style={{fontSize:13,fontWeight:600,color:"var(--dk)"}}>Aucune réservation pour l'instant</p>
+          <p style={{fontSize:12,color:"var(--g)",marginTop:4}}>Vos réservations apparaîtront ici</p>
+        </div>:
+      <div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 140px 200px 90px 130px",padding:"8px 12px",marginBottom:4}}>
+          {["Objet","Locataire","Dates","Montant","Statut"].map((h,i)=>(
+            <div key={i} style={{fontSize:10,fontWeight:700,color:"var(--g)",textTransform:"uppercase",letterSpacing:".06em"}}>{h}</div>
+          ))}
+        </div>
+        <div style={{borderTop:"1px solid var(--bd)"}}>
+          {myBookAsOwner.slice(0,5).map((b,i)=>{
+            const si=b.status==="confirmed"?{label:"Confirmée",color:"#059669",bg:"#d1fae5"}:b.status==="pending"?{label:"En attente",color:"#D97706",bg:"#FEF3C7"}:b.status==="cancelled"?{label:"Annulée",color:"#ef4444",bg:"#fee2e2"}:{label:"Nouvelle",color:"#2563EB",bg:"#dbeafe"};
+            return (
+              <div key={b.id} style={{display:"grid",gridTemplateColumns:"1fr 140px 200px 90px 130px",padding:"14px 12px",borderBottom:i<Math.min(myBookAsOwner.length,5)-1?"1px solid var(--bd)":"none",alignItems:"center",borderRadius:8,transition:"background .15s"}}
+                onMouseEnter={e=>e.currentTarget.style.background="var(--bg)"}
+                onMouseLeave={e=>e.currentTarget.style.background=""}>
+                <div style={{fontSize:13,fontWeight:600,color:"var(--dk)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingRight:12}}>{b.itemTitle}</div>
+                <div style={{fontSize:12,color:"var(--dk)"}}>{b.userName||b.ownerName||"Locataire"}</div>
+                <div style={{fontSize:11,color:"var(--g)"}}>{b.startDate||"—"} – {b.endDate||"—"}</div>
+                <div style={{fontSize:14,fontWeight:700,color:"var(--dk)"}}>{b.total}€</div>
+                <div><span style={{background:si.bg,color:si.color,borderRadius:20,padding:"4px 10px",fontSize:10,fontWeight:700}}>{si.label}</span></div>
+              </div>
+            );
+          })}
+        </div>
+      </div>}
+    </div>
+    {qrItem&&<QRModal item={qrItem} onClose={()=>setQrItem(null)}/>}
   </div>
   );
 }
