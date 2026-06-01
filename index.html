@@ -872,7 +872,42 @@ html.dark,html.dark body,html.dark #root{background:#0f0f13 !important;color:#f1
 .footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;padding-top:32px;border-top:1px solid rgba(255,255,255,0.15)}
 .footer-sec-links{}
 @media(max-width:680px){.footer-grid{grid-template-columns:repeat(2,1fr);gap:20px;}.footer-grid-full{grid-template-columns:1fr!important;}.footer-sec-hdr{cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:8px;margin-bottom:0!important;}.footer-sec-links{overflow:hidden;max-height:0;transition:max-height .3s ease;}.footer-sec-links.open{max-height:300px;}}
+/* ===== SIDEBAR LAYOUT (Figma) ===== */
+.sb-layout{display:flex;min-height:100vh;background:var(--bg)}
+.sb-rail{width:260px;background:var(--w);border-right:1px solid var(--bd);flex-shrink:0;display:flex;flex-direction:column;padding:24px 0;position:sticky;top:0;height:100vh;overflow-y:auto;box-shadow:1px 0 0 var(--bd)}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:0 20px 20px;border-bottom:1px solid var(--bd);margin-bottom:12px;cursor:pointer}
+.sb-logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--p),var(--pd));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:17px;font-family:var(--fd);flex-shrink:0}
+.sb-logo-name{font-family:var(--fd);font-size:20px;font-weight:700;color:var(--dk);letter-spacing:-.02em}
+.sb-nav{flex:1;padding:4px 12px 0;display:flex;flex-direction:column;gap:1px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all .18s;font-size:13px;font-weight:500;color:var(--tx);border:none;background:none;text-align:left;width:100%;font-family:var(--f)}
+.sb-item:hover{background:var(--bgw);color:var(--dk)}
+.sb-item.on{background:var(--bgw);color:var(--p);font-weight:700}
+.sb-item-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.sb-sep{height:1px;background:var(--bd);margin:8px 12px}
+.sb-footer{padding:8px 12px;flex-shrink:0}
+.sb-main{flex:1;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column}
+.sb-content{flex:1;padding:28px 32px;max-width:1180px}
+.sb-page-hdr{margin-bottom:24px}
+.sb-page-title{font-family:var(--fd);font-size:26px;font-weight:700;color:var(--dk);letter-spacing:-.02em;margin-bottom:4px}
+.sb-page-sub{font-size:13px;color:var(--g)}
+/* KPI cards Figma style */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--w);border:1px solid var(--bd);border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(15,10,71,.07);position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
+.kpi-val{font-family:var(--f);font-size:28px;font-weight:800;color:var(--dk);letter-spacing:-.02em;line-height:1.1}
+.kpi-lbl{font-size:12px;color:var(--g);margin-top:4px}
+.kpi-sub{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;display:inline-block;margin-top:8px}
+/* Fixed-height sidebar layout (for Messages) */
+.sb-layout-h{height:100vh;overflow:hidden}
+.sb-layout-h .sb-main{height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.sb-layout-h .msg-page{flex:1;height:auto;min-height:unset}
+/* Sidebar responsive hide */
+@media(max-width:900px){.sb-rail{display:none}.sb-layout{display:block}.sb-main{min-height:unset}}
+/* Profile desktop grids responsive */
+@media(max-width:1200px){.prof-favs-4col{grid-template-columns:repeat(3,1fr)!important}}
+@media(max-width:900px){.prof-favs-4col{grid-template-columns:repeat(2,1fr)!important}.prof-annonces-tbl{overflow-x:auto}}
 `;
+
 
 /* ========== COMPONENTS ========== */
 function Carousel({images,onClick}){const[c,setC]=useState(0);return <div className="ciw"><img className="cimg" src={images[c]} alt="" loading="lazy" onClick={onClick}/>{images.length>1&&<><button className="nav l" onClick={e=>{e.stopPropagation();setC(x=>(x-1+images.length)%images.length)}}><I.Chv d="l"/></button><button className="nav r" onClick={e=>{e.stopPropagation();setC(x=>(x+1)%images.length)}}><I.Chv d="r"/></button><div className="dts">{images.map((_,i)=><div key={i} className={"dt"+(i===c?" on":"")}/>)}</div></>}</div>}
@@ -897,6 +932,58 @@ function Card({item,onOpen,favs,dispatch,onAuthRequired,userLocation}){
 </div>}
 
 
+
+/* ====== Sidebar component ====== */
+function Sidebar({page,setPage,setProfTab,profTab,state,dispatch}){
+  const u=state.user;
+  const activeId=page==="profile"?profTab:page==="create"?"annonces":page;
+  const nav=[
+    {icon:"🏠",label:"Accueil",id:"home",action:()=>setPage("home")},
+    {icon:"📊",label:"Dashboard",id:"dashboard",action:()=>setPage("dashboard")},
+    {icon:"🔔",label:"Notifications",id:"notifs",action:()=>setPage("notifs")},
+    {icon:"💬",label:"Messages",id:"messages",action:()=>setPage("messages")},
+    {sep:true},
+    {icon:"📦",label:"Mes Annonces",id:"annonces",action:()=>{setProfTab("annonces");setPage("profile")}},
+    {icon:"📅",label:"Réservations",id:"reservations",action:()=>{setProfTab("reservations");setPage("profile")}},
+    {icon:"❤️",label:"Favoris",id:"favoris",action:()=>{setProfTab("favoris");setPage("profile")}},
+    {sep:true},
+    {icon:"🏅",label:"Mon Grade",id:"grade",action:()=>{setProfTab("grade");setPage("profile")}},
+    {icon:"⭐",label:"Avis reçus",id:"avis",action:()=>{setProfTab("avis");setPage("profile")}},
+    {icon:"⚙️",label:"Paramètres",id:"parametres",action:()=>{setProfTab("parametres");setPage("profile")}},
+  ];
+  return <div className="sb-rail">
+    <div className="sb-logo" onClick={()=>setPage("home")}>
+      <div className="sb-logo-icon">C</div>
+      <span className="sb-logo-name">Cercle</span>
+    </div>
+    <div style={{padding:"0 12px 12px"}}>
+      <button onClick={()=>setPage("create")} style={{width:"100%",padding:"10px 0",background:"var(--p)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,boxShadow:"0 4px 12px rgba(91,79,232,.3)",transition:"opacity .15s"}}
+        onMouseEnter={e=>e.currentTarget.style.opacity=".88"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+        + Publier une annonce
+      </button>
+    </div>
+    <div className="sb-nav">
+      {nav.map((item,i)=>item.sep?<div key={"sep"+i} className="sb-sep"/>:
+        <button key={item.id} className={"sb-item"+(activeId===item.id?" on":"")} onClick={item.action}>
+          <span className="sb-item-icon">{item.icon}</span>
+          <span>{item.label}</span>
+        </button>
+      )}
+    </div>
+    <div className="sb-footer">
+      <div className="sb-sep" style={{margin:"8px 0"}}/>
+      <div style={{padding:"8px 12px",display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}} onClick={()=>{setProfTab("parametres");setPage("profile");}}>
+        <div style={{width:32,height:32,borderRadius:"50%",background:"var(--bgw)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0,overflow:"hidden"}}>
+          {u?.avatarUrl?<img src={u.avatarUrl} style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:"50%"}} alt=""/>:(u?.avatar||"👤")}
+        </div>
+        <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,fontWeight:700,color:"var(--dk)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u?.name||""}</div><div style={{fontSize:10,color:"var(--g)"}}>Mon profil</div></div>
+      </div>
+      <button className="sb-item" style={{color:"#ef4444"}} onClick={()=>{if(window.auth)window.auth.signOut().catch(()=>{});dispatch({type:"LOGOUT"});setPage("home")}}>
+        <span className="sb-item-icon">🚪</span><span>Déconnexion</span>
+      </button>
+    </div>
+  </div>
+}
 
 /* ====== src/modals.jsx ====== */
 function CGUModal({onClose}){
@@ -1811,6 +1898,7 @@ function Profile({state, dispatch, setPage, setSelected, initTab, onEditItem}) {
   };
 
   const [tab, setTab] = React.useState(initTab || 'annonces');
+  React.useEffect(()=>{if(initTab)setTab(initTab);},[initTab]);
   const [editMode, setEditMode] = React.useState(false);
   const [verifModal, setVerifModal] = React.useState(null);
   const [verifData, setVerifData] = React.useState({firstName:'',lastName:'',docType:'CNI',docNum:'',docExp:'',phoneNum:'',smsCode:'',smsSent:false,licNum:'',licDate:'',licCat:'B',bankHolder:'',iban:'',bic:'',bankName:''});
@@ -2038,7 +2126,7 @@ function Profile({state, dispatch, setPage, setSelected, initTab, onEditItem}) {
       width: '100%',
       borderTop: '1px solid var(--bd)',
       borderBottom: '1px solid var(--bd)',
-      position: 'sticky', top: 72, zIndex: 30,
+      position: 'sticky', top: 0, zIndex: 30,
       overflowX: 'auto',
     },
     tabsInner: {
@@ -2241,135 +2329,129 @@ function Profile({state, dispatch, setPage, setSelected, initTab, onEditItem}) {
   );
 
   return (
-    <div style={S.page} className="profile-page-grain">
+    <div style={{padding:"28px 32px",background:"var(--bg)",minHeight:"100vh",animation:"fadeSlideUp 0.4s both"}}>
 
-      {/* ─── HEADER BLOCK ─── */}
-      <div style={S.headerBlock}>
-        <div style={S.headerDots}/>
-        {/* Ligne du haut : vide à gauche, boutons à droite */}
-        <div style={S.headerTopRow}>
-          <div/>
-          <div style={{display:'flex',gap:8}}>
-            <button onClick={() => setTab('parametres')} style={S.btnEdit}>✏️ Modifier</button>
-            <button style={{...S.btnShare,position:'relative'}} onClick={()=>{const url=window.location.href;if(navigator.share){navigator.share({title:'Cercle',url}).catch(()=>{})}else{navigator.clipboard.writeText(url).then(()=>{setShareCopied(true);setTimeout(()=>setShareCopied(false),2000);}).catch(()=>{});}}} title="Partager">{shareCopied?<span style={{fontSize:10,fontWeight:700,color:'#10b981'}}>Copié ✓</span>:'↗'}</button>
-          </div>
-        </div>
-
-        {/* Avatar centré */}
-        <div style={{position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center'}}>
-          <div style={S.avatarRing}>
-            <input ref={avatarInputRef} type="file" accept="image/*" capture="user" style={{display:'none'}} onChange={handleAvatarChange}/>
-            <div className="avatar-edit-wrap" onClick={()=>avatarInputRef.current&&avatarInputRef.current.click()} title="Changer la photo de profil">
-              <div style={S.avatar}>
+      {/* ─── COMPACT PROFILE HEADER (desktop sidebar layout) ─── */}
+      <div style={{background:"var(--w)",borderRadius:20,border:"1px solid var(--bd)",padding:"24px 28px",marginBottom:20,boxShadow:"0 4px 20px rgba(15,10,71,.07)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:20}}>
+          {/* Avatar */}
+          <div style={{position:"relative",flexShrink:0}}>
+            <input ref={avatarInputRef} type="file" accept="image/*" capture="user" style={{display:"none"}} onChange={handleAvatarChange}/>
+            <div className="avatar-edit-wrap" onClick={()=>avatarInputRef.current&&avatarInputRef.current.click()} title="Changer la photo de profil" style={{cursor:"pointer"}}>
+              <div style={{width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,#e0dbff,#c7f0ee)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,overflow:"hidden",position:"relative",border:isHeroFondateur?"3px solid #D4AF37":"3px solid var(--bgw)"}}>
                 {user.avatarUrl
-                  ? <img src={user.avatarUrl} style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover'}} alt="avatar"/>
-                  : (userAvatar || '👤')}
-                <div style={S.verifiedBadge}>{isHeroFondateur?'👑':'✓'}</div>
+                  ?<img src={user.avatarUrl} style={{width:"100%",height:"100%",borderRadius:"50%",objectFit:"cover"}} alt="avatar"/>
+                  :(userAvatar||"👤")}
               </div>
               <div className="avatar-edit-badge">📷</div>
             </div>
-            {user.isPro && <div className="pro-avatar-badge">PRO</div>}
+            {user.isPro&&<div className="pro-avatar-badge">PRO</div>}
+            <div style={{position:"absolute",bottom:0,right:0,width:22,height:22,borderRadius:"50%",background:isHeroFondateur?"linear-gradient(135deg,#D4AF37,#FFD700)":"#10b981",border:"2.5px solid var(--w)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:900}}>{isHeroFondateur?"👑":"✓"}</div>
           </div>
-
-          <h2 style={S.name}>{profileData.name}</h2>
-
-          <div style={S.gradeBadge}>
-            <span>{heroGrade.icon}</span>
-            <span>{heroGrade.name}</span>
-            {isHeroFondateur && <span style={{marginLeft:2}}>👑</span>}
+          {/* Identity + stats */}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
+              <h2 style={{fontSize:20,fontWeight:800,color:"var(--dk)",letterSpacing:"-.02em",margin:0,fontFamily:"var(--fd)"}}>{profileData.name}</h2>
+              <span style={{background:"var(--bgw)",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700,color:"var(--p)",display:"inline-flex",alignItems:"center",gap:4}}>{heroGrade.icon} {heroGrade.name}{isHeroFondateur&&" 👑"}</span>
+              {user.verified&&<span style={{background:"#d1fae5",borderRadius:20,padding:"3px 10px",fontSize:10,fontWeight:700,color:"#059669"}}>✓ Vérifié</span>}
+            </div>
+            <p style={{fontSize:12,color:"var(--g)",margin:"0 0 12px"}}>{profileData.email}{(user.city||user.location)&&` · 📍 ${user.city||user.location}`}</p>
+            <div style={{display:"flex",gap:20}}>
+              {[{n:listings.length||0,lbl:"annonces"},{n:reviewCount,lbl:"avis"},{n:parseFloat(avgRating)||0,lbl:"note moy.",fmt:v=>v===0?"—":v.toFixed(1)},{n:followerCount,lbl:"abonnés"}].map((s,i)=>(
+                <div key={i}><span style={{fontSize:16,fontWeight:800,color:"var(--dk)"}}>{s.fmt?s.fmt(s.n):s.n}</span><span style={{fontSize:11,color:"var(--g)",marginLeft:4}}>{s.lbl}</span></div>
+              ))}
+            </div>
           </div>
-
-          <div style={S.ratingRow}>
-            <StarRow n={5}/>
-            <span style={{fontSize:14,fontWeight:800,color:'white'}}>{avgRating}</span>
-            <span style={{fontSize:13,color:'rgba(255,255,255,0.65)'}}>· {reviewCount} avis</span>
-          </div>
+          {/* Edit button */}
+          <button onClick={()=>setTab("parametres")} style={{padding:"10px 18px",borderRadius:10,border:"1.5px solid var(--bd)",background:"var(--w)",color:"var(--dk)",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",gap:6}}>✏️ Modifier</button>
         </div>
-        <div style={S.headerFade}/>
-      </div>
-
-      {/* ─── STATS FLOTTANTES ─── */}
-      <div style={S.statsFloat}>
-        {[
-          {num: listings.length || 0, lbl: 'Annonces', icon: '🏷️'},
-          {num: reviewCount, lbl: 'Avis', icon: '⭐'},
-          {num: followerCount, lbl: 'Abonnés', icon: '👥'},
-        ].map(s => (
-          <div key={s.lbl} style={S.statCard}>
-            <span style={{fontSize:18,display:'block',marginBottom:4}}>{s.icon}</span>
-            <strong style={S.statNum}>{s.num}</strong>
-            <span style={S.statLbl}>{s.lbl}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* ─── BADGES / PILLS ─── */}
-      <div style={S.pillsRow}>
-        {user.verified && <span style={S.pillGreen}>✓ Identité vérifiée</span>}
-        {(user.superHost || (state.reviews.length >= 10 && (state.reviews.reduce((s,r)=>s+r.rating,0)/state.reviews.length) >= 4.5)) && <span style={S.pillPurple}>🏅 Super hôte</span>}
-        {(user.city||user.location)&&<span style={S.pill}>📍 {user.city||user.location}</span>}
-        {user.since&&<span style={S.pill}>🗓️ Membre depuis {user.since}</span>}
-        {followerCount>0&&<span style={S.pill}>👥 {followerCount} abonné{followerCount>1?'s':''}</span>}
-      </div>
-
-      {/* ─── BIO ─── */}
-      {profileData.bio && <div style={S.bioCard}>{profileData.bio}</div>}
-
-      {/* ─── TRUST ─── */}
-      <div style={S.trustRow}>
-        <span style={S.pill}>⚡ Répond en &lt;1h</span>
-        <span style={S.pill}>🔒 Paiement sécurisé</span>
-        <span style={S.pill}>🛡️ Caution assurée</span>
+        {/* Pills row */}
+        {(user.verified||user.superHost||(user.city||user.location)||profileData.bio)&&
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:14,paddingTop:14,borderTop:"1px solid var(--bd)"}}>
+            {profileData.bio&&<span style={{fontSize:12,color:"var(--g)",flex:"0 0 100%",marginBottom:4,lineHeight:1.5}}>{profileData.bio}</span>}
+            <span style={S.pill}>⚡ Répond en &lt;1h</span>
+            <span style={S.pill}>🔒 Paiement sécurisé</span>
+            <span style={S.pill}>🛡️ Caution assurée</span>
+          </div>}
       </div>
 
       {/* ─── TABS ─── */}
-      <div style={S.tabsWrap}>
-        <div style={S.tabsInner}>
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              style={{...S.tab(tab===t.id), outline:'none',
-                borderTop:'none', borderLeft:'none', borderRight:'none'}}>
-              <span>{t.icon}</span>
-              <span>{t.label}</span>
-              {t.count !== null && <span style={S.tabCount(tab===t.id)}>{t.count}</span>}
-            </button>
-          ))}
-        </div>
+      <div style={{display:"flex",gap:2,background:"var(--w)",borderRadius:14,border:"1px solid var(--bd)",padding:"4px",marginBottom:20,flexWrap:"wrap",boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
+        {tabs.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{
+            padding:"9px 14px",borderRadius:10,border:"none",
+            background:tab===t.id?"var(--bgw)":"transparent",
+            color:tab===t.id?"var(--p)":"var(--g)",
+            fontWeight:tab===t.id?700:500,fontSize:12,cursor:"pointer",outline:"none",
+            display:"flex",alignItems:"center",gap:5,transition:"all .15s",fontFamily:"var(--f)"
+          }}>
+            <span>{t.icon}</span><span>{t.label}</span>
+            {t.count!==null&&<span style={{fontSize:10,fontWeight:700,background:tab===t.id?"rgba(91,79,232,0.12)":"var(--bg)",color:tab===t.id?"var(--p)":"var(--gl)",borderRadius:8,padding:"1px 6px"}}>{t.count}</span>}
+          </button>
+        ))}
       </div>
 
       {/* ─── CONTENT ─── */}
-      <div key={tab} style={{...S.content, animation:'fadeSlideUp 0.35s cubic-bezier(0.34,1.56,0.64,1) both'}}>
+      <div key={tab} style={{animation:"fadeSlideUp 0.35s cubic-bezier(0.34,1.56,0.64,1) both"}}>
 
         {/* ── Annonces ── */}
         {tab === 'annonces' && (
-          <div style={displayListings.length===0?{textAlign:'center',padding:'48px 20px',color:'#9ca3af'}:S.listingGrid}>
-            {displayListings.length===0&&<><div style={{fontSize:44,marginBottom:12}}>🏷️</div><p style={{fontWeight:700,color:'#374151',fontSize:15,marginBottom:4}}>Aucune annonce pour l'instant</p><p style={{fontSize:13}}>Publie ta première annonce pour commencer à louer !</p></>}
-            {displayListings.map((l, i) => (
-              <div key={l.id} className="prof-listing-card" style={{...S.card, animation:'fadeSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both', animationDelay:`${i*0.07}s`}} onClick={() => { setSelected && setSelected(l); }}>
-                <div style={{...S.listingImg,padding:0,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bgw)'}}>
-                  {l.images&&l.images[0]
-                    ?<img src={l.images[0]} alt={l.title} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
-                    :<span style={{fontSize:32}}>{l.img||'📦'}</span>}
-                </div>
-                <div style={S.listingBody}>
-                  <p style={S.listingTitle}>{l.title}</p>
-                  <p style={S.listingPrice}>{l.price}€<span style={{fontWeight:400,fontSize:11,color:'var(--g)'}}>/jour</span></p>
-                  <div style={S.listingRating}>⭐ {l.rating || '4.8'} <span>· {l.reviews || 0} avis{(l.likeCount||0)>0?` · ❤️ ${l.likeCount}`:''}</span></div>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5,marginTop:8}}>
-                    <button onClick={e=>{e.stopPropagation();onEditItem&&onEditItem(l);}} style={{padding:'6px 0',border:'1.5px solid #d1fae5',borderRadius:10,background:'#f0fdf4',color:'#059669',fontSize:11,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:3}}>✏️ Modifier</button>
-                    <button onClick={e=>{e.stopPropagation();setCalItem(l);}} style={{padding:'6px 0',border:'1.5px solid #bfdbfe',borderRadius:10,background:'#eff6ff',color:'#2563eb',fontSize:11,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:3}}>📅 Dates</button>
-                    <button onClick={e=>{e.stopPropagation();setQrItem(l);}} style={{padding:'6px 0',border:'1.5px solid #d1c9ff',borderRadius:10,background:'#f5f3ff',color:'#5b4fe8',fontSize:11,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:3}}>📱 QR</button>
-                    {deleteConfirm===l.id
-                      ?<div style={{display:'flex',gap:3,gridColumn:'span 2'}}>
-                          <button onClick={e=>{e.stopPropagation();dispatch({type:'DELETE_ITEM',id:l.id});setDeleteConfirm(null);}} style={{flex:1,padding:'6px 0',border:'none',borderRadius:10,background:'#ef4444',color:'#fff',fontSize:11,fontWeight:700,cursor:'pointer'}}>Confirmer</button>
-                          <button onClick={e=>{e.stopPropagation();setDeleteConfirm(null);}} style={{flex:1,padding:'6px 0',border:'1.5px solid var(--bd)',borderRadius:10,background:'var(--w)',color:'var(--dk)',fontSize:11,fontWeight:700,cursor:'pointer'}}>Annuler</button>
-                        </div>
-                      :<button onClick={e=>{e.stopPropagation();setDeleteConfirm(l.id);}} style={{padding:'6px 0',border:'1.5px solid #fecaca',borderRadius:10,background:'#fff1f2',color:'#ef4444',fontSize:11,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:3}}>🗑️ Supp.</button>
-                    }
-                  </div>
-                </div>
+          <div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+              <div>
+                <div style={{fontSize:15,fontWeight:700,color:"var(--dk)"}}>{displayListings.length} annonce{displayListings.length!==1?"s":""}</div>
+                <div style={{fontSize:12,color:"var(--g)",marginTop:2}}>Vos objets disponibles à la location</div>
               </div>
-            ))}
+              <button onClick={()=>setPage("create")} style={{padding:"10px 18px",background:"var(--p)",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6,boxShadow:"0 4px 14px rgba(91,79,232,.3)"}}>+ Nouvelle annonce</button>
+            </div>
+            {displayListings.length===0?(
+              <div style={{textAlign:"center",padding:"60px 20px",background:"var(--w)",borderRadius:16,border:"2px dashed var(--bd)"}}>
+                <div style={{fontSize:44,marginBottom:12}}>🏷️</div>
+                <p style={{fontWeight:700,color:"var(--dk)",fontSize:15,marginBottom:4}}>Aucune annonce pour l'instant</p>
+                <p style={{fontSize:13,color:"var(--g)"}}>Publie ta première annonce pour commencer à louer !</p>
+              </div>
+            ):(
+              <div style={{background:"var(--w)",borderRadius:16,border:"1px solid var(--bd)",overflow:"hidden",boxShadow:"0 4px 20px rgba(15,10,71,.05)"}}>
+                <div style={{display:"grid",gridTemplateColumns:"56px 1fr 100px 100px 140px",padding:"10px 16px",background:"var(--bg)",borderBottom:"1px solid var(--bd)"}}>
+                  {["","Annonce","Prix","Statut","Actions"].map((h,i)=>(
+                    <div key={i} style={{fontSize:10,fontWeight:700,color:"var(--g)",textTransform:"uppercase",letterSpacing:".06em"}}>{h}</div>
+                  ))}
+                </div>
+                {displayListings.map((l,i)=>{
+                  const stat=l.status||"available";
+                  const statusLabel=stat==="rented"?"En location":stat==="maintenance"?"Maintenance":"Disponible";
+                  const statusColor=stat==="rented"?"#D97706":stat==="maintenance"?"#6b7280":"#059669";
+                  const statusBg=stat==="rented"?"#FEF3C7":stat==="maintenance"?"#f3f4f6":"#d1fae5";
+                  return (
+                    <div key={l.id} onClick={()=>{setSelected&&setSelected(l);}} style={{display:"grid",gridTemplateColumns:"56px 1fr 100px 100px 140px",padding:"14px 16px",borderBottom:i<displayListings.length-1?"1px solid var(--bd)":"none",alignItems:"center",cursor:"pointer",transition:"background .15s"}}
+                      onMouseEnter={e=>e.currentTarget.style.background="var(--bg)"}
+                      onMouseLeave={e=>e.currentTarget.style.background=""}>
+                      <div style={{width:44,height:44,borderRadius:10,overflow:"hidden",background:"var(--bgw)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
+                        {l.images&&l.images[0]?<img src={l.images[0]} alt={l.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(l.img||"📦")}
+                      </div>
+                      <div style={{paddingRight:8}}>
+                        <div style={{fontSize:13,fontWeight:700,color:"var(--dk)",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.title}</div>
+                        <div style={{fontSize:11,color:"var(--g)"}}>⭐ {l.rating||"4.8"} · {l.reviews||0} avis{(l.likeCount||0)>0?` · ❤️ ${l.likeCount}`:""}</div>
+                      </div>
+                      <div style={{fontSize:14,fontWeight:800,color:"var(--p)"}}>{l.price}€<span style={{fontSize:10,fontWeight:400,color:"var(--g)"}}>/j</span></div>
+                      <div><span style={{background:statusBg,color:statusColor,borderRadius:20,padding:"4px 10px",fontSize:10,fontWeight:700}}>{statusLabel}</span></div>
+                      <div style={{display:"flex",gap:4}} onClick={e=>e.stopPropagation()}>
+                        <button onClick={e=>{e.stopPropagation();onEditItem&&onEditItem(l);}} style={{width:30,height:30,border:"1px solid var(--bd)",borderRadius:8,background:"var(--w)",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}} title="Modifier">✏️</button>
+                        <button onClick={e=>{e.stopPropagation();setCalItem(l);}} style={{width:30,height:30,border:"1px solid var(--bd)",borderRadius:8,background:"var(--w)",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}} title="Calendrier">📅</button>
+                        <button onClick={e=>{e.stopPropagation();setQrItem(l);}} style={{width:30,height:30,border:"1px solid var(--bd)",borderRadius:8,background:"var(--w)",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}} title="QR Code">📱</button>
+                        {deleteConfirm===l.id
+                          ?<>
+                            <button onClick={e=>{e.stopPropagation();dispatch({type:"DELETE_ITEM",id:l.id});setDeleteConfirm(null);}} style={{width:30,height:30,border:"none",borderRadius:8,background:"#ef4444",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:700}}>✓</button>
+                            <button onClick={e=>{e.stopPropagation();setDeleteConfirm(null);}} style={{width:30,height:30,border:"1px solid var(--bd)",borderRadius:8,background:"var(--w)",cursor:"pointer",fontSize:11,fontWeight:700}}>✕</button>
+                          </>
+                          :<button onClick={e=>{e.stopPropagation();setDeleteConfirm(l.id);}} style={{width:30,height:30,border:"1px solid #fecaca",borderRadius:8,background:"#fff1f2",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}} title="Supprimer">🗑️</button>
+                        }
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
         {qrItem&&<QRModal item={qrItem} onClose={()=>setQrItem(null)}/>}
@@ -2410,64 +2492,128 @@ function Profile({state, dispatch, setPage, setSelected, initTab, onEditItem}) {
         {/* ── Réservations ── */}
         {tab === 'reservations' && (()=>{
           const userBookings=state.bookings.filter(b=>b.userId===user.id||b.ownerId===user.id);
-          const statusMap={confirmed:{label:'Confirmée',color:'#10b981',bg:'#d1fae5'},cancelled:{label:'Annulée',color:'#ef4444',bg:'#fee2e2'}};
+          const statusInfo={
+            confirmed:{label:"Confirmée",color:"#059669",bg:"#d1fae5",icon:"✓"},
+            cancelled:{label:"Annulée",color:"#ef4444",bg:"#fee2e2",icon:"✕"},
+            pending:{label:"En attente",color:"#D97706",bg:"#FEF3C7",icon:"⏳"}
+          };
           return <div>
-            <p style={{fontSize:13,color:'var(--g)',margin:'0 0 16px',fontWeight:500}}>{userBookings.length} réservation{userBookings.length!==1?'s':''} au total</p>
-            {userBookings.length===0?<div style={{textAlign:'center',padding:'40px 0'}}><span style={{fontSize:40}}>📅</span><p style={{fontWeight:700,color:'#374151',fontSize:15,marginTop:12}}>Aucune réservation pour l'instant</p></div>:
-            userBookings.map((b, i) => {
-              const sm=statusMap[b.status]||{label:'En cours',color:'#3b82f6',bg:'#dbeafe'};
-              const other=b.userId===user.id?b.ownerName:b.ownerName;
-              return <div key={b.id} style={{...S.resCard, animation:'fadeSlideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both', animationDelay:`${i*0.07}s`}}>
-                <div style={{...S.resImgBox,overflow:'hidden',padding:0}}>
-                  {b.itemImg
-                    ? <img src={b.itemImg} alt={b.itemTitle} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:12}}/>
-                    : <span style={{fontSize:24}}>📦</span>}
-                </div>
-                <div style={S.resInfo}>
-                  <p style={S.resTitle}>{b.itemTitle}</p>
-                  <p style={S.resMeta}>📅 {b.startDate} – {b.endDate} · avec {other}</p>
-                  <div style={S.resFooter}>
-                    <span className="prof-badge-pulse" style={{...S.resBadge(sm.color,sm.bg),animationDelay:`${i*0.1+0.3}s`}}>{sm.label}</span>
-                    <span style={S.resPrice}>{b.total} €</span>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+              <div>
+                <div style={{fontSize:15,fontWeight:700,color:"var(--dk)"}}>{userBookings.length} réservation{userBookings.length!==1?"s":""}</div>
+                <div style={{fontSize:12,color:"var(--g)",marginTop:2}}>Historique complet</div>
+              </div>
+            </div>
+            {userBookings.length===0?
+              <div style={{textAlign:"center",padding:"60px 0",background:"var(--w)",borderRadius:16,border:"2px dashed var(--bd)"}}>
+                <span style={{fontSize:40}}>📅</span>
+                <p style={{fontWeight:700,color:"var(--dk)",fontSize:15,marginTop:12}}>Aucune réservation pour l'instant</p>
+              </div>:
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {userBookings.map((b,i)=>{
+                const si=statusInfo[b.status]||{label:"En cours",color:"#3b82f6",bg:"#dbeafe",icon:"→"};
+                const isOwner=b.ownerId===user.id;
+                const other=isOwner?b.ownerName:b.ownerName;
+                const now=Date.now();
+                const start=b.startDate?new Date(b.startDate).getTime():now-86400000;
+                const end=b.endDate?new Date(b.endDate).getTime():now+86400000;
+                const totalDuration=end-start;
+                const elapsed=Math.max(0,Math.min(1,(now-start)/totalDuration));
+                const isActive=b.status==="confirmed"&&now>=start&&now<=end;
+                const daysLeft=Math.max(0,Math.ceil((end-now)/86400000));
+                return (
+                  <div key={b.id} style={{background:"var(--w)",borderRadius:16,border:"1px solid var(--bd)",padding:"18px 20px",boxShadow:"0 2px 12px rgba(15,10,71,.05)",animation:`fadeSlideIn 0.4s ${i*0.06}s both`}}>
+                    <div style={{display:"flex",gap:14,alignItems:"flex-start"}}>
+                      <div style={{width:56,height:56,borderRadius:12,background:"var(--bgw)",overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>
+                        {b.itemImg?<img src={b.itemImg} alt={b.itemTitle} style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:12}}/>:"📦"}
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:8}}>
+                          <div>
+                            <div style={{fontSize:14,fontWeight:700,color:"var(--dk)",marginBottom:2}}>{b.itemTitle}</div>
+                            <div style={{fontSize:12,color:"var(--g)"}}>{isOwner?"Loué à":"Loué par"} {other||"?"} · {b.startDate||"—"} – {b.endDate||"—"}</div>
+                          </div>
+                          <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+                            <span style={{background:si.bg,color:si.color,borderRadius:20,padding:"4px 12px",fontSize:11,fontWeight:700}}>{si.icon} {si.label}</span>
+                            <span style={{fontSize:15,fontWeight:800,color:"var(--dk)"}}>{b.total}€</span>
+                          </div>
+                        </div>
+                        {isActive&&<div>
+                          <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--g)",marginBottom:5}}>
+                            <span>En cours de location</span>
+                            <span style={{fontWeight:600,color:"var(--p)"}}>{daysLeft} jour{daysLeft!==1?"s":""} restant{daysLeft!==1?"s":""}</span>
+                          </div>
+                          <div style={{height:6,background:"var(--bgw)",borderRadius:3,overflow:"hidden"}}>
+                            <div style={{width:`${elapsed*100}%`,height:"100%",background:"linear-gradient(90deg,var(--p),#7c5ce7)",borderRadius:3,transition:"width 0.8s ease"}}/>
+                          </div>
+                        </div>}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>;
-            })}
+                );
+              })}
+            </div>}
           </div>;
         })()}
 
         {/* ── Avis ── */}
         {tab === 'avis' && (
           <div>
-            {reviewCount===0?<div style={{textAlign:'center',padding:'40px 0'}}><span style={{fontSize:44}}>⭐</span><p style={{fontWeight:700,color:'#374151',fontSize:16,marginTop:12}}>Aucun avis pour l'instant</p><p style={{fontSize:13,color:'#9ca3af',marginTop:4}}>Tes premiers avis apparaîtront ici après tes locations.</p></div>:<>
-            <div style={S.ratingHero}>
-              <div style={{textAlign:'center'}}>
+            {reviewCount===0?
+              <div style={{textAlign:"center",padding:"60px 0",background:"var(--w)",borderRadius:16,border:"2px dashed var(--bd)"}}>
+                <span style={{fontSize:44}}>⭐</span>
+                <p style={{fontWeight:700,color:"var(--dk)",fontSize:16,marginTop:12}}>Aucun avis pour l'instant</p>
+                <p style={{fontSize:13,color:"var(--g)",marginTop:4}}>Tes premiers avis apparaîtront ici après tes locations.</p>
+              </div>:
+            <>
+            {/* KPI cards */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20}}>
+              <div style={{background:"var(--w)",borderRadius:16,padding:"20px",border:"1px solid var(--bd)",boxShadow:"0 4px 20px rgba(15,10,71,.05)",borderLeft:"4px solid #F59E0B"}}>
+                <div style={{fontSize:10,color:"var(--g)",fontWeight:700,marginBottom:4,textTransform:"uppercase",letterSpacing:".06em"}}>Note moyenne</div>
+                <div style={{fontSize:32,fontWeight:800,color:"var(--dk)",letterSpacing:"-.02em",lineHeight:1.1}}>{avgRating}</div>
+                <div style={{fontSize:14,color:"#F59E0B",marginTop:6,letterSpacing:1}}>{"★".repeat(Math.round(parseFloat(avgRating)||0))}{"☆".repeat(5-Math.round(parseFloat(avgRating)||0))}</div>
+              </div>
+              <div style={{background:"var(--w)",borderRadius:16,padding:"20px",border:"1px solid var(--bd)",boxShadow:"0 4px 20px rgba(15,10,71,.05)",borderLeft:"4px solid var(--p)"}}>
+                <div style={{fontSize:10,color:"var(--g)",fontWeight:700,marginBottom:4,textTransform:"uppercase",letterSpacing:".06em"}}>Total avis</div>
+                <div style={{fontSize:32,fontWeight:800,color:"var(--dk)",letterSpacing:"-.02em",lineHeight:1.1}}>{reviewCount}</div>
+                <div style={{fontSize:12,color:"var(--g)",marginTop:6}}>évaluations reçues</div>
+              </div>
+              <div style={{background:"var(--w)",borderRadius:16,padding:"20px",border:"1px solid var(--bd)",boxShadow:"0 4px 20px rgba(15,10,71,.05)",borderLeft:"4px solid #10b981"}}>
+                <div style={{fontSize:10,color:"var(--g)",fontWeight:700,marginBottom:4,textTransform:"uppercase",letterSpacing:".06em"}}>Avis 5 étoiles</div>
+                <div style={{fontSize:32,fontWeight:800,color:"var(--dk)",letterSpacing:"-.02em",lineHeight:1.1}}>{state.reviews.filter(r=>r.rating>=5).length}</div>
+                <div style={{fontSize:12,color:"#10b981",marginTop:6}}>{reviewCount>0?Math.round(state.reviews.filter(r=>r.rating>=5).length/reviewCount*100):0}% des avis</div>
+              </div>
+            </div>
+            {/* Rating distribution */}
+            <div style={{...S.ratingHero,marginBottom:20}}>
+              <div style={{textAlign:"center",flexShrink:0}}>
                 <div style={S.ratingBig}>{avgRating}</div>
-                <div style={S.ratingStars}>{'★'.repeat(Math.round(parseFloat(avgRating)||0))}{'☆'.repeat(5-Math.round(parseFloat(avgRating)||0))}</div>
+                <div style={S.ratingStars}>{"★".repeat(Math.round(parseFloat(avgRating)||0))}{"☆".repeat(5-Math.round(parseFloat(avgRating)||0))}</div>
                 <div style={S.ratingTotal}>{reviewCount} avis</div>
               </div>
               <div style={{flex:1}}>
-                {[5,4,3,2,1].map(n => {
+                {[5,4,3,2,1].map(n=>{
                   const cnt=state.reviews.filter(r=>Math.round(r.rating)===n).length;
-                  const pct=reviewCount>0?Math.round(cnt/reviewCount*100)+'%':'0%';
+                  const pct=reviewCount>0?Math.round(cnt/reviewCount*100)+"%":"0%";
                   return <div key={n} style={S.barRow}>
                     <span style={S.barLabel}>{n}</span>
                     <div style={S.barTrack}><div style={S.barFill(pct)}/></div>
-                    <span style={{fontSize:11,color:'#9ca3af',width:24}}>{cnt}</span>
+                    <span style={{fontSize:11,color:"#9ca3af",width:24}}>{cnt}</span>
                   </div>;
                 })}
               </div>
             </div>
-            {(()=>{const colors=['#8b5cf6','#3b82f6','#10b981','#f59e0b','#06b6d4'];return state.reviews.map((r,i)=>{
-              const initials=(r.fromUserName||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-              const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString('fr-FR',{month:'short',year:'numeric'}):'';
-              return <div key={r.id} style={{...S.reviewCard,animation:'scaleIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both',animationDelay:`${i*0.08}s`}}>
+            {/* Review cards */}
+            {(()=>{const colors=["#8b5cf6","#3b82f6","#10b981","#f59e0b","#06b6d4"];return state.reviews.map((r,i)=>{
+              const initials=(r.fromUserName||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+              const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString("fr-FR",{month:"short",year:"numeric"}):"";
+              return <div key={r.id} style={{...S.reviewCard,animation:"scaleIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both",animationDelay:`${i*0.08}s`}}>
                 <div style={S.reviewTop}>
                   <div style={S.reviewAvatar(colors[i%colors.length])}>{initials}</div>
                   <div style={{flex:1}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                       <span style={S.reviewName}>{r.fromUserName}</span>
-                      <span style={{fontSize:12,letterSpacing:1}}>{Array.from({length:r.rating}).map((_,si)=><span key={si} style={{color:'#f59e0b',display:'inline-block',animation:'scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both',animationDelay:`${i*0.08+si*0.06}s`}}>★</span>)}</span>
+                      <span style={{fontSize:12,letterSpacing:1}}>{Array.from({length:r.rating}).map((_,si)=><span key={si} style={{color:"#f59e0b",display:"inline-block",animation:"scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both",animationDelay:`${i*0.08+si*0.06}s`}}>★</span>)}</span>
                     </div>
                     <div style={S.reviewDate}>{dateStr}</div>
                   </div>
@@ -2502,27 +2648,36 @@ function Profile({state, dispatch, setPage, setSelected, initTab, onEditItem}) {
         {/* ── Favoris ── */}
         {tab === 'favoris' && (
           <div key="favoris">
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+              <div>
+                <div style={{fontSize:15,fontWeight:700,color:"var(--dk)"}}>{favItems.length} favori{favItems.length!==1?"s":""}</div>
+                <div style={{fontSize:12,color:"var(--g)",marginTop:2}}>Annonces que vous avez likées</div>
+              </div>
+            </div>
             {favItems.length === 0 ? (
-              <div style={{textAlign:'center',padding:'48px 20px',color:'#9ca3af'}}>
-                <div style={{fontSize:44,marginBottom:12,animation:'float 3s ease-in-out infinite'}}>❤️</div>
-                <p style={{fontWeight:700,color:'#374151',fontSize:15,marginBottom:4}}>Aucun favori pour l'instant</p>
-                <p style={{fontSize:13}}>Likez des annonces pour les retrouver ici</p>
+              <div style={{textAlign:"center",padding:"60px 20px",background:"var(--w)",borderRadius:16,border:"2px dashed var(--bd)"}}>
+                <div style={{fontSize:44,marginBottom:12,animation:"float 3s ease-in-out infinite"}}>❤️</div>
+                <p style={{fontWeight:700,color:"var(--dk)",fontSize:15,marginBottom:4}}>Aucun favori pour l'instant</p>
+                <p style={{fontSize:13,color:"var(--g)"}}>Likez des annonces pour les retrouver ici</p>
               </div>
             ) : (
-              <div style={S.listingGrid}>
-                {favItems.map((f, i) => (
-                  <div key={f.id} className="prof-fav-card" style={{...S.favCard, animation:'fadeSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both', animationDelay:`${i*0.07}s`, cursor:'pointer'}} onClick={()=>{setSelected&&setSelected(f);}}>
-                    <div style={{...S.favImg, fontSize:0}}>
-                      <img src={f.images&&f.images[0]} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                      <div style={{...S.favHeart, animation:'float 3s ease-in-out infinite', animationDelay:`${i*0.3}s`}}>❤️</div>
-                      {f.owner?.verified && <div style={{position:'absolute',top:8,left:8,background:'rgba(0,0,0,0.5)',color:'#fff',borderRadius:6,padding:'2px 6px',fontSize:11,fontWeight:700}}>✓</div>}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16}}>
+                {favItems.map((f,i)=>(
+                  <div key={f.id} className="prof-fav-card" style={{background:"var(--w)",borderRadius:16,border:"1px solid var(--bd)",boxShadow:"0 2px 12px rgba(15,10,71,.05)",overflow:"hidden",cursor:"pointer",transition:"transform .2s,box-shadow .2s",animation:`fadeSlideUp 0.4s ${i*0.06}s both`}}
+                    onClick={()=>{setSelected&&setSelected(f);}}
+                    onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 8px 24px rgba(15,10,71,.1)"}}
+                    onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 2px 12px rgba(15,10,71,.05)"}}>
+                    <div style={{height:144,position:"relative",background:"var(--bgw)",overflow:"hidden"}}>
+                      {f.images&&f.images[0]?<img src={f.images[0]} alt={f.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36}}>{f.img||"📦"}</div>}
+                      <div style={{position:"absolute",top:8,right:8,width:28,height:28,borderRadius:"50%",background:"rgba(255,255,255,0.9)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,boxShadow:"0 1px 4px rgba(0,0,0,0.1)"}}>❤️</div>
+                      {f.owner?.verified&&<div style={{position:"absolute",top:8,left:8,background:"rgba(0,0,0,0.5)",color:"#fff",borderRadius:6,padding:"2px 6px",fontSize:10,fontWeight:700}}>✓ Vérifié</div>}
                     </div>
-                    <div style={S.favBody}>
-                      <p style={S.favTitle}>{f.title}</p>
-                      <p style={S.favOwner}>par {f.owner?.name||'Propriétaire'}</p>
-                      <div style={S.favBottom}>
-                        <span style={S.favPrice}>{f.price}€<span style={{fontWeight:400,fontSize:11,color:'#9ca3af'}}>/j</span></span>
-                        <span style={S.favRating}>⭐ {f.rating} <span style={{color:'#d1d5db'}}>·</span> {f.reviews}</span>
+                    <div style={{padding:"12px 14px"}}>
+                      <p style={{fontSize:13,fontWeight:700,color:"var(--dk)",margin:"0 0 2px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.title}</p>
+                      <p style={{fontSize:11,color:"var(--g)",margin:"0 0 8px"}}>par {f.owner?.name||"Propriétaire"}</p>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <span style={{fontSize:14,fontWeight:800,color:"var(--p)"}}>{f.price}€<span style={{fontWeight:400,fontSize:10,color:"#9ca3af"}}>/j</span></span>
+                        <span style={{fontSize:11,color:"var(--g)"}}>⭐ {f.rating||"4.8"} · {f.reviews||0}</span>
                       </div>
                     </div>
                   </div>
@@ -2786,13 +2941,7 @@ function Profile({state, dispatch, setPage, setSelected, initTab, onEditItem}) {
 
         {/* ── Paramètres ── */}
         {tab === 'parametres' && (
-          <div style={{paddingBottom:80}}>
-
-            {/* ── Titre de page ── */}
-            <div style={{marginBottom:24,animation:'fadeSlideUp 0.35s cubic-bezier(0.34,1.56,0.64,1) both'}}>
-              <h2 style={{fontSize:22,fontWeight:800,color:'var(--dk)',letterSpacing:'-.03em',margin:0}}>Paramètres</h2>
-              <p style={{fontSize:13,color:'var(--g)',marginTop:4,margin:'4px 0 0'}}>Gérez votre compte et vos préférences</p>
-            </div>
+          <div style={{paddingBottom:40,maxWidth:760}}>
 
             {/* ── Complétion du profil ── */}
             {(()=>{
@@ -3814,18 +3963,24 @@ function MapPage({items,onOpen}){
 /* ===== NOTIF CENTER ===== */
 function NotifCenter({state,dispatch,setPage}){
   const kinds={booking:"📅",deposit:"🔒",listing:"📦",referral:"🎁",dispute:"⚖️",system:"⚙️"};
-  return <div className="nc">
-    <button className="cl" style={{marginBottom:14,display:"flex",alignItems:"center",gap:5}} onClick={()=>setPage("home")}><I.Back/> Retour</button>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <h1 style={{fontFamily:"var(--fd)",fontSize:22}}>🔔 Notifications</h1>
-      {state.notifications.some(n=>!n.read)&&<button className="cl" onClick={()=>dispatch({type:"READ_N"})}>Tout marquer lu</button>}
+  const unread=state.notifications.filter(n=>!n.read);
+  return <div style={{padding:"28px 32px",background:"var(--bg)",minHeight:"100vh"}}>
+    <div style={{maxWidth:720}}>
+      <div className="sb-page-hdr" style={{marginBottom:20,display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}}>
+        <div><div className="sb-page-title">Notifications</div><div className="sb-page-sub">{unread.length>0?`${unread.length} non lue${unread.length>1?"s":""}` : "Tout est lu ✓"}</div></div>
+        {unread.length>0&&<button className="cl" style={{flexShrink:0,fontSize:12}} onClick={()=>dispatch({type:"READ_N"})}>Tout marquer lu</button>}
+      </div>
+      {state.notifications.length===0?<div className="empty" style={{padding:"60px 0"}}><span>🔔</span><h2>Aucune notification</h2></div>:
+      <div style={{display:"flex",flexDirection:"column",gap:4}}>
+        {state.notifications.map(n=>(
+          <div key={n.id} onClick={()=>dispatch({type:"READ_ONE",id:n.id})} style={{display:"flex",gap:12,padding:"14px 16px",borderRadius:12,cursor:"pointer",transition:"background .15s",background:n.read?"var(--w)":"#f7f5ff",borderLeft:n.read?"none":"3px solid var(--p)",border:n.read?"1px solid var(--bd)":"1px solid #d1c7ff",marginBottom:0}}>
+            <div style={{width:38,height:38,borderRadius:12,background:n.read?"var(--bgw)":"#ede9fe",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>{kinds[n.kind]||"📌"}</div>
+            <div style={{flex:1}}><div style={{fontSize:13,fontWeight:n.read?400:600,color:"var(--dk)"}}>{n.text}</div><div style={{fontSize:10,color:"var(--g)",marginTop:3}}>{ds(n.at)}</div></div>
+            {!n.read&&<div style={{width:8,height:8,borderRadius:"50%",background:"var(--p)",flexShrink:0,marginTop:5}}/>}
+          </div>
+        ))}
+      </div>}
     </div>
-    {state.notifications.length===0?<div className="empty"><span>🔔</span><h2>Aucune notification</h2></div>:
-    state.notifications.map(n=><div key={n.id} className={"nc-i"+(n.read?"":" unread")} onClick={()=>dispatch({type:"READ_ONE",id:n.id})}>
-      <div className="nc-ic" style={{background:n.read?"var(--bgw)":"#FEF2F2"}}>{kinds[n.kind]||"📌"}</div>
-      <div style={{flex:1}}><div style={{fontSize:13,fontWeight:n.read?400:600}}>{n.text}</div><div style={{fontSize:10,color:"var(--g)"}}>{ds(n.at)}</div></div>
-      {!n.read&&<div style={{width:8,height:8,borderRadius:"50%",background:"var(--p)",flexShrink:0}}/>}
-    </div>)}
   </div>
 }
 
@@ -4309,34 +4464,26 @@ function Dashboard({state,dispatch,setPage}){
     {icon:"✅",val:myBookAsOwner.filter(b=>b.status==="confirmed").length,label:"Confirmées",sub:"locations",color:"#10b981",bg:"linear-gradient(135deg,#d1fae5,#a7f3d0)"},
     {icon:"⏳",val:pending,label:"En attente",sub:"à confirmer",color:"#f59e0b",bg:"linear-gradient(135deg,#fef3c7,#fde68a)"},
   ];
-  const card={background:"var(--w)",borderRadius:18,boxShadow:"0 2px 20px rgba(0,0,0,0.07)",overflow:"hidden"};
+  const card={background:"var(--w)",borderRadius:16,boxShadow:"0 4px 20px rgba(15,10,71,.07)",overflow:"hidden",border:"1px solid var(--bd)"};
   return(
-  <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#5b4fe8 0%,#7c5ce7 28%,#5a7fff 62%,#4ECDC4 100%)",backgroundAttachment:"fixed",overflowX:"hidden",paddingBottom:90,animation:"fadeSlideUp 0.4s both"}}>
-    {/* ── Header ── */}
-    <div style={{padding:"52px 20px 28px",position:"relative"}}>
-      <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(circle,rgba(255,255,255,0.1) 1px,transparent 1px)",backgroundSize:"22px 22px",pointerEvents:"none"}}/>
-      <div style={{position:"relative",maxWidth:860,margin:"0 auto"}}>
-        <button onClick={()=>setPage("home")} style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:20,padding:"6px 14px",color:"white",fontSize:13,fontWeight:600,marginBottom:20,cursor:"pointer",backdropFilter:"blur(8px)"}}>
-          <I.Back/> Retour
-        </button>
-        <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
-          <div>
-            <div style={{fontSize:12,color:"rgba(255,255,255,0.65)",fontWeight:500,marginBottom:6,textTransform:"uppercase",letterSpacing:1,animation:"fadeSlideIn 0.5s both"}}>Tableau de bord</div>
-            <h1 style={{fontSize:28,fontWeight:800,color:"white",margin:0,letterSpacing:-0.5,lineHeight:1.1,animation:"fadeSlideIn 0.5s 0.08s both"}}>Bonjour {u.name.split(" ")[0]} 👋</h1>
-            <p style={{fontSize:13,color:"rgba(255,255,255,0.6)",margin:"8px 0 0"}}>
-              {totalYear>0?`${totalYear}€ générés cette année · `:""}
-              {myItems.length} annonce{myItems.length!==1?"s":""} en ligne
-            </p>
-          </div>
-          <button onClick={exportPDF} style={{display:"flex",alignItems:"center",gap:7,background:"rgba(255,255,255,0.18)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:12,padding:"9px 16px",color:"white",fontSize:12,fontWeight:600,cursor:"pointer",backdropFilter:"blur(8px)"}}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{width:13,height:13}}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            PDF
-          </button>
-        </div>
+  <div style={{padding:"28px 32px",background:"var(--bg)",minHeight:"100vh",animation:"fadeSlideUp 0.4s both"}}>
+    {/* ── Page header Figma style ── */}
+    <div style={{marginBottom:24,display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+      <div>
+        <div className="sb-page-title">Tableau de bord</div>
+        <p className="sb-page-sub">
+          Bonjour {u.name?.split(" ")[0]} 👋 —{" "}
+          {totalYear>0?`${totalYear}€ générés cette année · `:""}
+          {myItems.length} annonce{myItems.length!==1?"s":""} en ligne
+        </p>
       </div>
+      <button onClick={exportPDF} style={{display:"flex",alignItems:"center",gap:7,background:"var(--p)",border:"none",borderRadius:100,padding:"9px 18px",color:"white",fontSize:12,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 12px rgba(91,79,232,.25)"}}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{width:13,height:13}}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exporter PDF
+      </button>
     </div>
 
-    <div style={{maxWidth:860,margin:"0 auto",padding:"0 14px",display:"flex",flexDirection:"column",gap:14}}>
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
 
       {/* ── PRO EXTRA KPIs ── */}
       {u.isPro&&<div style={{...card,padding:'16px 18px',background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1.5px solid #FDE68A'}}>
@@ -4361,15 +4508,15 @@ function Dashboard({state,dispatch,setPage}){
         </div>
       </div>}
 
-      {/* ── KPIs ── */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12}}>
+      {/* ── KPIs Figma style ── */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}} className="dboard-grid">
         {kpis.map((k,i)=>(
-          <div key={i} style={{...card,padding:"16px"}}>
+          <div key={i} style={{...card,padding:"18px 18px 18px 22px",borderLeft:`4px solid ${k.color}`}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-              <div style={{width:40,height:40,borderRadius:12,background:k.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>{k.icon}</div>
+              <div style={{width:36,height:36,borderRadius:10,background:k.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{k.icon}</div>
               <span style={{fontSize:10,fontWeight:700,color:k.color,background:k.bg,padding:"3px 8px",borderRadius:20}}>{k.sub}</span>
             </div>
-            <div style={{fontSize:26,fontWeight:800,color:"var(--dk)",letterSpacing:-0.5,lineHeight:1}}>{k.val}</div>
+            <div style={{fontSize:28,fontWeight:800,color:"var(--dk)",letterSpacing:-0.5,lineHeight:1}}>{k.val}</div>
             <div style={{fontSize:12,color:"var(--g)",marginTop:4}}>{k.label}</div>
           </div>
         ))}
@@ -5071,9 +5218,9 @@ function App(){
     </main>}
 
     {page==="info"&&infoPage&&<InfoPage id={infoPage} setPage={p=>{setInfoPage(null);setPage(p);}}/>}
-    {page==="profile"&&state.user&&<Profile state={state} dispatch={dispatch} setPage={setPage} setSelected={openDetail} initTab={profTab} onEditItem={(item)=>{setEditItem(item);setPage("create");}}/>}
-    {page==="messages"&&state.user&&<Messages state={state} dispatch={dispatch} cid={cid} setCid={setCid} setPage={setPage}/>}
-    {page==="create"&&state.user&&<CreateListing state={state} dispatch={dispatch} setPage={(p)=>{setEditItem(null);setPage(p);}} mode={mode} editItem={editItem}/>}
+    {page==="profile"&&state.user&&<div className="sb-layout"><Sidebar page={page} setPage={setPage} setProfTab={setProfTab} profTab={profTab} state={state} dispatch={dispatch}/><div className="sb-main"><Profile state={state} dispatch={dispatch} setPage={setPage} setSelected={openDetail} initTab={profTab} onEditItem={(item)=>{setEditItem(item);setPage("create");}}/></div></div>}
+    {page==="messages"&&state.user&&<div className="sb-layout sb-layout-h"><Sidebar page={page} setPage={setPage} setProfTab={setProfTab} profTab={profTab} state={state} dispatch={dispatch}/><div className="sb-main"><Messages state={state} dispatch={dispatch} cid={cid} setCid={setCid} setPage={setPage}/></div></div>}
+    {page==="create"&&state.user&&<div className="sb-layout"><Sidebar page={page} setPage={setPage} setProfTab={setProfTab} profTab={profTab} state={state} dispatch={dispatch}/><div className="sb-main"><CreateListing state={state} dispatch={dispatch} setPage={(p)=>{setEditItem(null);setPage(p);}} mode={mode} editItem={editItem}/></div></div>}
     {(page==="create"||page==="profile"||page==="messages"||page==="dashboard"||page==="referral"||page==="verify"||page==="dispute"||page==="wallet"||page==="badges")&&!state.user&&<div className="empty" style={{paddingTop:100}}><span>🔒</span><h2>Connectez-vous</h2><p>Vous devez être connecté pour accéder à cette page.</p><button className="bp" style={{marginTop:14}} onClick={()=>setShowA("login")}>Se connecter</button></div>}
 
     {page==="home"&&<footer id="site-footer" style={{background:"#0f0b2b",marginTop:0,paddingBottom:0}}>
@@ -5127,8 +5274,8 @@ function App(){
     {showOnboarding&&<Onboarding onClose={()=>{setShowOnboarding(false);try{localStorage.setItem('cercle_ob','1')}catch{}}}/>}
     <div className="toast-stack">{toasts.map(t=><div key={t.id} className={"t2 t2-"+t.type}><span>{t.type==='s'?"✅":t.type==='b'?"🎉":t.type==='e'?"❌":t.type==='w'?"⭐":"ℹ️"}</span><span>{t.text}</span></div>)}</div>
     {page==="map"&&<MapPage items={filtered} onOpen={openDetail} favs={state.favorites} dispatch={dispatch} mode={mode}/>}
-    {page==="notifs"&&state.user&&<NotifCenter state={state} dispatch={dispatch} setPage={setPage}/>}
-    {page==="dashboard"&&state.user&&<Dashboard state={state} dispatch={dispatch} setPage={setPage}/>}
+    {page==="notifs"&&state.user&&<div className="sb-layout"><Sidebar page={page} setPage={setPage} setProfTab={setProfTab} profTab={profTab} state={state} dispatch={dispatch}/><div className="sb-main"><NotifCenter state={state} dispatch={dispatch} setPage={setPage}/></div></div>}
+    {page==="dashboard"&&state.user&&<div className="sb-layout"><Sidebar page={page} setPage={setPage} setProfTab={setProfTab} profTab={profTab} state={state} dispatch={dispatch}/><div className="sb-main"><Dashboard state={state} dispatch={dispatch} setPage={setPage}/></div></div>}
     {page==="gestion"&&state.user&&state.user.isPro&&<GestionPro state={state} dispatch={dispatch} setPage={setPage}/>}
     {page==="gestion"&&state.user&&!state.user.isPro&&<div className="empty" style={{paddingTop:100}}><span>⭐</span><h2>Réservé aux Pro</h2><p>Créez un compte professionnel pour accéder à la Gestion Pro.</p><button className="bp" style={{marginTop:14}} onClick={()=>setShowA("register")}>Passer en Pro</button></div>}
     {page==="referral"&&state.user&&<ReferralPage state={state} dispatch={dispatch} setPage={setPage}/>}
