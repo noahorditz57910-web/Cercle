@@ -221,7 +221,13 @@ html,body{overflow-x:hidden;width:100%}
 .dark .cl-header{background:rgba(15,15,19,0.95)}
 .cl-prog{height:3px;background:var(--bd);border-radius:99;margin-top:0;overflow:hidden}
 .cl-prog-fill{height:100%;background:linear-gradient(90deg,var(--p),#F59E0B);border-radius:99;transition:width .4s ease}
-.cl-body{max-width:600px;margin:0 auto;padding:24px 20px}
+.cl-body{padding:24px 32px;display:flex;gap:32px;align-items:flex-start;max-width:1200px;margin:0 auto}
+.cl-form{flex:1;min-width:0;max-width:620px}
+.cl-preview-panel{width:300px;flex-shrink:0;position:sticky;top:80px}
+.cl-preview-card{background:var(--w);border-radius:16px;box-shadow:0 4px 24px rgba(15,10,71,.1);overflow:hidden;border:1px solid var(--bd)}
+.cl-preview-img{width:100%;height:165px;object-fit:cover;display:block;background:var(--bg)}
+.cl-preview-body{padding:12px 14px 14px}
+@media(max-width:900px){.cl-body{flex-direction:column;padding:20px 16px}.cl-form{max-width:100%}.cl-preview-panel{width:100%;position:static}}
 .cl-section{background:var(--w);border-radius:20px;padding:22px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1px solid var(--bd)}
 .dark .cl-section{background:#1a1a24;border-color:rgba(255,255,255,.08)}
 .cl-section-title{font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--p);margin-bottom:16px;display:flex;align-items:center;gap:8px}
@@ -3344,6 +3350,9 @@ function CreateListing({state,dispatch,setPage,mode,editItem}){
   };
 
   const canSubmit = f.title.trim() && f.price;
+  const catImg = useMemo(()=>mkImg(f.cat,99,0),[f.cat]);
+  const previewImg = photos[0] || catImg;
+
   return <div className="cl-page">
     {/* Sticky header */}
     <div className="cl-header">
@@ -3356,6 +3365,8 @@ function CreateListing({state,dispatch,setPage,mode,editItem}){
     </div>
 
     <div className="cl-body">
+    {/* ── Form (left) ── */}
+    <div className="cl-form">
       {/* Section 1: Infos de base */}
       <div className="cl-section">
         <div className="cl-section-title"><span>📝</span> L'essentiel</div>
@@ -3480,7 +3491,40 @@ function CreateListing({state,dispatch,setPage,mode,editItem}){
         {photos.length===0&&<p style={{fontSize:12,color:'var(--g)',marginTop:10,textAlign:'center'}}>Les annonces avec photos reçoivent 3× plus de demandes</p>}
         <button onClick={e=>{e.stopPropagation();camRef.current&&camRef.current.click()}} style={{marginTop:12,width:'100%',padding:'10px',background:'var(--bg)',border:'1.5px solid var(--bd)',borderRadius:12,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,color:'var(--dk)'}}>📷 Prendre une photo</button>
       </div>
+    </div>{/* /cl-form */}
+
+    {/* ── Preview panel (right / sticky) ── */}
+    <div className="cl-preview-panel">
+      <div style={{fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--g)',marginBottom:12}}>Aperçu en direct</div>
+      <div className="cl-preview-card">
+        <div style={{position:'relative'}}>
+          <img className="cl-preview-img" src={previewImg} alt="aperçu"/>
+          {f.condition&&<span style={{position:'absolute',bottom:10,right:10,background:'rgba(245,158,11,0.92)',color:'#fff',fontSize:10,fontWeight:700,padding:'3px 9px',borderRadius:8,backdropFilter:'blur(4px)'}}>{f.condition}</span>}
+          {state.user?.isPro&&<div style={{position:'absolute',top:10,left:10,background:'linear-gradient(135deg,#F59E0B,#D97706)',color:'#fff',padding:'4px 10px',borderRadius:8,fontSize:9,fontWeight:700,letterSpacing:'.04em'}}>PRO</div>}
+        </div>
+        <div className="cl-preview-body">
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8,marginBottom:5}}>
+            <span style={{fontSize:14,fontWeight:700,color:f.title?'var(--dk)':'var(--gl)',lineHeight:1.35,flex:1,overflow:'hidden',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{f.title||"Titre de l'annonce"}</span>
+            <span style={{display:'flex',alignItems:'center',gap:3,fontSize:12,fontWeight:600,color:'var(--tx)',flexShrink:0}}>⭐ 4,9</span>
+          </div>
+          <div style={{fontSize:12,color:'var(--g)',marginBottom:8}}>📍 {f.location||'Localisation'}</div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span style={{fontSize:18,fontWeight:800,color:'var(--p)'}}>{f.price?f.price+'€':<span style={{fontSize:14,color:'var(--gl)',fontWeight:400}}>Prix/jour</span>}<span style={{color:'var(--g)',fontSize:12,fontWeight:400}}>{f.price?' / jour':''}</span></span>
+            {f.deposit&&<span style={{fontSize:11,color:'var(--g)'}}>Caution {f.deposit}€</span>}
+          </div>
+        </div>
+      </div>
+      {f.description&&(
+        <div style={{marginTop:12,background:'var(--w)',borderRadius:14,border:'1px solid var(--bd)',padding:'12px 14px'}}>
+          <div style={{fontSize:11,fontWeight:700,color:'var(--g)',marginBottom:6,textTransform:'uppercase',letterSpacing:'.04em'}}>Description</div>
+          <div style={{fontSize:12,color:'var(--tx)',lineHeight:1.6,display:'-webkit-box',WebkitLineClamp:4,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{f.description}</div>
+        </div>
+      )}
+      <div style={{marginTop:12,padding:'10px 14px',background:'rgba(91,79,232,.06)',borderRadius:12,fontSize:12,color:'var(--p)',fontWeight:600,textAlign:'center'}}>
+        💡 Gains estimés : <strong>{f.price?Math.round(+f.price*0.88)+'€/j':'—'}</strong> après commission
+      </div>
     </div>
+    </div>{/* /cl-body */}
 
     {/* Sticky CTA */}
     <div className="cl-submit">
