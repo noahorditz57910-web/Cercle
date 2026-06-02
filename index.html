@@ -434,7 +434,7 @@ body,html,#root{font-family:var(--f);color:var(--tx);background:var(--bg);-webki
 .hdr.scrolled{box-shadow:0 4px 30px rgba(91,79,232,0.14)}
 .hi{display:flex;align-items:center;justify-content:space-between;padding:0 28px;max-width:1520px;margin:0 auto;height:72px;gap:12px}
 .logo{display:flex;align-items:center;gap:10px;cursor:pointer;flex-shrink:0}
-.lc{width:36px;height:36px;border-radius:10px;background:transparent;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);will-change:transform}
+.lc{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#5b4fe8,#2e1fc2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px;font-family:var(--fd);flex-shrink:0;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);will-change:transform}
 .logo:hover .lc{transform:translateX(5px) scale(1.06)}.lt{font-family:var(--fd);font-size:22px;font-weight:700;color:var(--dk);letter-spacing:-.02em}
 /* Search bar */
 .sb{display:flex;align-items:center;border:1.5px solid var(--bd);border-radius:40px;box-shadow:var(--sh);cursor:pointer;height:48px;max-width:520px;flex:1;margin:0 20px;background:var(--w);transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);will-change:box-shadow,border-color}
@@ -961,7 +961,7 @@ function Sidebar({page,setPage,setProfTab,profTab,state,dispatch}){
   ];
   return <div className="sb-rail">
     <div className="sb-logo" onClick={()=>setPage("home")}>
-      <img src={LOGO_SRC} alt="Cercle" style={{width:36,height:36,objectFit:"contain",borderRadius:8,flexShrink:0}}/>
+      <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#5b4fe8,#2e1fc2)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:18,fontFamily:"var(--fd)",flexShrink:0}}>C</div>
       <span className="sb-logo-name">Cercle</span>
     </div>
     <div style={{padding:"0 12px 12px"}}>
@@ -5457,7 +5457,7 @@ function App(){
     {/* Splash Screen */}
     {splash&&<div className="splash" style={{opacity:1,transition:"opacity .5s"}}><div className="splash-logo" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><img src={LOGO_SRC} alt="Cercle" style={{height:90,width:90,objectFit:"contain",filter:"invert(1)",mixBlendMode:"screen"}} /></div><h2 style={{fontFamily:'Georgia,serif',fontWeight:400,letterSpacing:3,fontSize:28}}>Cercle</h2><p>Location entre particuliers & pros</p></div>}
     {page!=="messages"&&page!=="notifs"&&page!=="dashboard"&&page!=="gestion"&&page!=="referral"&&page!=="verify"&&page!=="dispute"&&page!=="wallet"&&page!=="badges"&&page!=="profile"&&page!=="create"&&<header className={"hdr"+(mode==="pro"?" pro-hdr":"")}><div className="hi">
-      <a className="logo" onClick={home} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:8}}><div className="lc"><img src={LOGO_SRC} alt="Cercle" style={{width:'100%',height:'100%',objectFit:'contain'}}/></div><span className="lt" style={{color:mode==='pro'?'#2563EB':'var(--dk)'}}>{mode==='pro'?'Cercle Pro':'Cercle'}</span></a>
+      <a className="logo" onClick={home} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:8}}><div className="lc">C</div><span className="lt" style={{color:mode==='pro'?'#2563EB':'var(--dk)'}}>{mode==='pro'?'Cercle Pro':'Cercle'}</span></a>
       <div className="mode-sw">
         <button className={"mode-btn"+(mode==='perso'?' on':'')} onClick={()=>setMode('perso')}>👤 Particulier</button>
         <button className={"mode-btn"+(mode==='pro'?' pro-on':'')} onClick={()=>setMode('pro')}>🏢 Professionnel</button>
