@@ -952,11 +952,11 @@ function Sidebar({page,setPage,setProfTab,profTab,state,dispatch}){
     {icon:"💬",label:"Messages",id:"messages",action:()=>setPage("messages")},
     {sep:true},
     {icon:"📦",label:"Mes Annonces",id:"annonces",action:()=>{setProfTab("annonces");setPage("profile")}},
-    {icon:"📅",label:"Réservations",id:"reservations",action:()=>{setProfTab("reservations");setPage("profile")}},
-    {icon:"❤️",label:"Favoris",id:"favoris",action:()=>{setProfTab("favoris");setPage("profile")}},
+    {icon:"📅",label:"Réservations",id:"reservations",action:()=>setPage("reservations")},
+    {icon:"❤️",label:"Favoris",id:"favoris",action:()=>setPage("favoris")},
     {sep:true},
     {icon:"🏅",label:"Mon Grade",id:"grade",action:()=>{setProfTab("grade");setPage("profile")}},
-    {icon:"⭐",label:"Avis reçus",id:"avis",action:()=>{setProfTab("avis");setPage("profile")}},
+    {icon:"⭐",label:"Avis reçus",id:"avis",action:()=>setPage("avis")},
     {icon:"⚙️",label:"Paramètres",id:"parametres",action:()=>{setProfTab("parametres");setPage("profile")}},
   ];
   return <div className="sb-rail">
@@ -5023,6 +5023,234 @@ function ConfirmDeliveryPage({annonceId, allItems, onBack}){
   );
 }
 
+/* ========== STANDALONE PAGES ========== */
+
+function FavorisPage({state,dispatch,setPage,setSelected}){
+  const [favFilter,setFavFilter]=React.useState('tous');
+  const user=state.user;
+  const allItems=[...(state.items||[]),...(state.proItems||[]),...(state.userItems||[]),...(state.cloudItems||[])];
+  const favItems=allItems.filter(i=>state.favorites&&state.favorites.has(i.id));
+  const FAV_CATS=[{id:'tous',label:'Tous'},{id:'bricolage',label:'Bricolage'},{id:'electronique',label:'Électronique'},{id:'vehicules',label:'Véhicules'},{id:'sport',label:'Sport'}];
+  const CAT_COLORS=['#f5a623','#3d85f5','#1ab885','#993de5','#e5453d','#0bb8a9','#f59e0b','#6366f1'];
+  const displayItems=favFilter==='tous'?favItems:favItems.filter(f=>{
+    const cat=(f.cat||'').toLowerCase();
+    const catFr=(CATS_FR[f.cat]||'').toLowerCase();
+    return cat===favFilter||catFr===favFilter;
+  });
+  return (
+    <div style={{padding:"32px 40px",flex:1}}>
+      {/* Title */}
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
+        <div style={{fontFamily:"var(--fd)",fontSize:28,fontWeight:700,color:"var(--dk)"}}>Mes favoris</div>
+        <span style={{background:"var(--p)",color:"#fff",borderRadius:20,padding:"3px 12px",fontSize:13,fontWeight:700}}>{favItems.length}</span>
+      </div>
+      <div style={{fontSize:13,color:"var(--g)",marginBottom:24}}>Les objets que vous avez sauvegardés</div>
+      {/* Filter pills */}
+      <div style={{display:"flex",gap:8,marginBottom:24,flexWrap:"wrap"}}>
+        {FAV_CATS.map(c=>(
+          <button key={c.id} onClick={()=>setFavFilter(c.id)} style={{padding:"8px 20px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,background:favFilter===c.id?"var(--p)":"var(--w)",color:favFilter===c.id?"#fff":"var(--tx)",boxShadow:favFilter===c.id?"0 2px 8px rgba(91,79,232,.3)":"0 1px 4px rgba(0,0,0,0.06)",transition:"all .2s"}}>{c.label}</button>
+        ))}
+      </div>
+      {displayItems.length===0?(
+        <div style={{textAlign:"center",padding:"80px 20px",background:"var(--w)",borderRadius:16,border:"2px dashed var(--bd)"}}>
+          <div style={{fontSize:44,marginBottom:12}}>❤️</div>
+          <p style={{fontWeight:700,color:"var(--dk)",fontSize:15,marginBottom:4}}>Aucun favori{favFilter!=='tous'?' dans cette catégorie':''}</p>
+          <p style={{fontSize:13,color:"var(--g)"}}>Likez des annonces pour les retrouver ici</p>
+        </div>
+      ):(
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:18}}>
+          {displayItems.map((f,i)=>{
+            const colorIdx=Math.abs((f.title||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0))%CAT_COLORS.length;
+            return (
+              <div key={f.id} style={{background:"var(--w)",borderRadius:16,border:"1px solid var(--bd)",boxShadow:"0 2px 12px rgba(15,10,71,.05)",overflow:"hidden",transition:"transform .2s,box-shadow .2s",animation:`fadeSlideUp 0.4s ${i*0.05}s both`}}
+                onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 8px 24px rgba(15,10,71,.1)"}}
+                onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="0 2px 12px rgba(15,10,71,.05)"}}>
+                <div style={{height:148,position:"relative",background:f.images&&f.images[0]?'var(--bgw)':CAT_COLORS[colorIdx],overflow:"hidden",cursor:"pointer"}} onClick={()=>setSelected&&setSelected(f)}>
+                  {f.images&&f.images[0]
+                    ?<img src={f.images[0]} alt={f.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                    :<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:44}}>{f.img||"📦"}</div>}
+                  <button onClick={e=>{e.stopPropagation();dispatch({type:'TOGGLE_FAVORITE',itemId:f.id});}} style={{position:"absolute",top:8,right:8,width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.92)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,boxShadow:"0 1px 4px rgba(0,0,0,0.15)"}}>❤️</button>
+                </div>
+                <div style={{padding:"14px 16px"}}>
+                  <p style={{fontSize:13,fontWeight:700,color:"var(--dk)",margin:"0 0 3px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.title}</p>
+                  <p style={{fontSize:11,color:"var(--g)",margin:"0 0 10px"}}>{CATS_FR[f.cat]||f.cat||"Divers"}</p>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                    <span style={{fontSize:15,fontWeight:800,color:"var(--p)"}}>{f.price}€<span style={{fontWeight:400,fontSize:11,color:"#9ca3af"}}>/j</span></span>
+                    <span style={{fontSize:12,color:"var(--g)"}}>⭐ {f.rating||"4.8"}</span>
+                  </div>
+                  <button onClick={()=>setSelected&&setSelected(f)} style={{width:"100%",padding:"9px 0",borderRadius:10,border:"none",background:"var(--p)",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",transition:"opacity .15s"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>Réserver</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReservationsPage({state,dispatch,setPage}){
+  const [resFilter,setResFilter]=React.useState('tout');
+  const user=state.user;
+  if(!user) return null;
+  const now=Date.now();
+  const allBookings=state.bookings.filter(b=>b.userId===user.id||b.ownerId===user.id);
+  const catColors=['#f5a623','#3d85f5','#1ab885','#993de5','#e5453d','#0bb8a9'];
+  function bookingStatus(b){
+    if(b.status==='cancelled') return 'annulee';
+    const s=b.startDate?new Date(b.startDate).getTime():0;
+    const e=b.endDate?new Date(b.endDate).getTime():0;
+    if(now>=s&&now<=e) return 'en_cours';
+    if(now<s) return 'a_venir';
+    return 'terminee';
+  }
+  const counts={tout:allBookings.length,en_cours:allBookings.filter(b=>bookingStatus(b)==='en_cours').length,a_venir:allBookings.filter(b=>bookingStatus(b)==='a_venir').length,terminee:allBookings.filter(b=>bookingStatus(b)==='terminee').length};
+  const filtered=resFilter==='tout'?allBookings:allBookings.filter(b=>bookingStatus(b)===resFilter);
+  const TABS=[{id:'tout',label:`Tout (${counts.tout})`},{id:'en_cours',label:`En cours (${counts.en_cours})`},{id:'a_venir',label:`À venir (${counts.a_venir})`},{id:'terminee',label:`Terminées (${counts.terminee})`}];
+  const statusMap={en_cours:{label:"En cours",color:"#059669",bg:"#d1fae5"},a_venir:{label:"À venir",color:"#2563eb",bg:"#dbeafe"},terminee:{label:"Terminée",color:"#6b7280",bg:"#f3f4f6"},annulee:{label:"Annulée",color:"#ef4444",bg:"#fee2e2"}};
+  return (
+    <div style={{padding:"32px 40px",flex:1}}>
+      <div style={{fontFamily:"var(--fd)",fontSize:28,fontWeight:700,color:"var(--dk)",marginBottom:4}}>Réservations</div>
+      <div style={{fontSize:13,color:"var(--g)",marginBottom:24}}>Gérez vos locations en cours et à venir</div>
+      {/* Filter tabs */}
+      <div style={{display:"flex",gap:8,marginBottom:24,flexWrap:"wrap"}}>
+        {TABS.map(t=>(
+          <button key={t.id} onClick={()=>setResFilter(t.id)} style={{padding:"8px 20px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,background:resFilter===t.id?"var(--p)":"var(--w)",color:resFilter===t.id?"#fff":"var(--tx)",boxShadow:resFilter===t.id?"0 2px 8px rgba(91,79,232,.3)":"0 1px 4px rgba(0,0,0,0.06)",transition:"all .2s"}}>{t.label}</button>
+        ))}
+      </div>
+      {filtered.length===0?(
+        <div style={{textAlign:"center",padding:"80px 0",background:"var(--w)",borderRadius:16,border:"2px dashed var(--bd)"}}>
+          <span style={{fontSize:44}}>📅</span>
+          <p style={{fontWeight:700,color:"var(--dk)",fontSize:15,marginTop:12}}>Aucune réservation</p>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {filtered.map((b,i)=>{
+            const bStatus=bookingStatus(b);
+            const isOwner=b.ownerId===user.id;
+            const personName=isOwner?(b.renterName||b.userName||"?"):(b.ownerName||"?");
+            const s=b.startDate?new Date(b.startDate).getTime():now-86400000;
+            const e=b.endDate?new Date(b.endDate).getTime():now+86400000;
+            const elapsed=Math.max(0,Math.min(1,(now-s)/(e-s)));
+            const pct=Math.round(elapsed*100);
+            const days=b.startDate&&b.endDate?Math.max(1,Math.ceil((e-s)/86400000)):1;
+            const caution=b.caution||(b.total?b.total*2:null);
+            const colorIdx=Math.abs((b.itemTitle||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0))%catColors.length;
+            const si=statusMap[bStatus]||statusMap.a_venir;
+            return (
+              <div key={b.id} style={{background:"var(--w)",borderRadius:16,border:"1px solid var(--bd)",padding:"20px 24px",boxShadow:"0 2px 12px rgba(15,10,71,.05)",display:"flex",gap:18,alignItems:"center",animation:`fadeSlideIn 0.4s ${i*0.06}s both`}}>
+                <div style={{width:76,height:76,borderRadius:14,background:catColors[colorIdx],overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:32}}>
+                  {b.itemImg?<img src={b.itemImg} alt={b.itemTitle} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(b.itemEmoji||"📦")}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:15,fontWeight:700,color:"var(--dk)",marginBottom:3}}>{b.itemTitle||"Article"}</div>
+                  <div style={{fontSize:12,color:"var(--g)",marginBottom:8}}>Loué par {personName} · 📅 {b.startDate||"—"} – {b.endDate||"—"} · {days} jour{days!==1?"s":""}</div>
+                  {bStatus==='en_cours'&&<div>
+                    <div style={{height:5,background:"var(--bgw)",borderRadius:3,overflow:"hidden",marginBottom:4}}>
+                      <div style={{width:`${pct}%`,height:"100%",background:"linear-gradient(90deg,var(--p),#7c5ce7)",borderRadius:3}}/>
+                    </div>
+                    <div style={{fontSize:11,color:"var(--g)"}}>{pct}% complété</div>
+                  </div>}
+                </div>
+                <div style={{flexShrink:0,textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6,minWidth:120}}>
+                  <div style={{fontSize:22,fontWeight:800,color:"var(--dk)"}}>{b.total||"—"} €</div>
+                  {caution&&<div style={{fontSize:12,color:"var(--g)"}}>Caution : {caution} €</div>}
+                  <span style={{background:si.bg,color:si.color,borderRadius:20,padding:"4px 14px",fontSize:11,fontWeight:700}}>{si.label}</span>
+                  <div style={{display:"flex",gap:6,marginTop:2}}>
+                    <button style={{padding:"6px 14px",borderRadius:8,border:"1.5px solid var(--bd)",background:"var(--w)",color:"var(--tx)",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>💬 Contacter</button>
+                    {bStatus==='terminee'&&<button style={{padding:"6px 14px",borderRadius:8,border:"none",background:"#fef3c7",color:"#92400e",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>⭐ Laisser avis</button>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AvisPage({state}){
+  const user=state.user;
+  if(!user) return null;
+  const myRevs=(state.reviews||[]).filter(r=>r.targetId===user.id);
+  const reviewCount=myRevs.length;
+  const avgRating=reviewCount>0?(myRevs.reduce((s,r)=>s+r.rating,0)/reviewCount).toFixed(1).replace('.',','):'—';
+  const replyCount=myRevs.filter(r=>r.reply).length;
+  const replyPct=reviewCount>0?Math.round(replyCount/reviewCount*100):0;
+  const lastRating=myRevs.length>0?myRevs[myRevs.length-1].rating:null;
+  const colors=["#8b5cf6","#3b82f6","#10b981","#f59e0b","#06b6d4"];
+  return (
+    <div style={{padding:"32px 40px",flex:1}}>
+      <div style={{fontFamily:"var(--fd)",fontSize:28,fontWeight:700,color:"var(--dk)",marginBottom:4}}>Mes avis</div>
+      <div style={{fontSize:13,color:"var(--g)",marginBottom:24}}>Votre réputation sur la plateforme</div>
+      {reviewCount===0?(
+        <div style={{textAlign:"center",padding:"80px 0",background:"var(--w)",borderRadius:16,border:"2px dashed var(--bd)"}}>
+          <span style={{fontSize:44}}>⭐</span>
+          <p style={{fontWeight:700,color:"var(--dk)",fontSize:16,marginTop:12}}>Aucun avis pour l'instant</p>
+          <p style={{fontSize:13,color:"var(--g)",marginTop:4}}>Tes premiers avis apparaîtront ici après tes locations.</p>
+        </div>
+      ):(
+        <>
+          {/* 4 KPI cards */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,marginBottom:24}}>
+            {[
+              {label:"Note moyenne",value:avgRating,sub:<span style={{fontSize:16,color:"#f59e0b",letterSpacing:2}}>{"★".repeat(Math.round(parseFloat(avgRating)||0))}{"☆".repeat(5-Math.round(parseFloat(avgRating)||0))}</span>,accent:"#F59E0B"},
+              {label:"Avis reçus",value:reviewCount,sub:<span style={{fontSize:12,color:"var(--g)"}}>évaluations</span>,accent:"var(--p)"},
+              {label:"Réponses",value:replyPct+"%",sub:<span style={{fontSize:12,color:"#10b981"}}>taux de réponse</span>,accent:"#10b981"},
+              {label:"Dernière note",value:lastRating?(lastRating+"★"):"—",sub:<span style={{fontSize:12,color:"var(--g)"}}>dernier avis reçu</span>,accent:"#f59e0b"},
+            ].map(k=>(
+              <div key={k.label} style={{background:"var(--w)",borderRadius:16,padding:"20px",border:"1px solid var(--bd)",boxShadow:"0 4px 20px rgba(15,10,71,.05)",borderLeft:`4px solid ${k.accent}`}}>
+                <div style={{fontSize:10,color:"var(--g)",fontWeight:700,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>{k.label}</div>
+                <div style={{fontSize:32,fontWeight:800,color:"var(--dk)",letterSpacing:"-.02em",lineHeight:1.1,marginBottom:6}}>{k.value}</div>
+                {k.sub}
+              </div>
+            ))}
+          </div>
+          {/* Rating distribution */}
+          <div style={{background:"var(--w)",borderRadius:20,padding:"22px 26px",border:"1px solid var(--bd)",boxShadow:"0 1px 8px rgba(0,0,0,0.06)",marginBottom:24,maxWidth:440}}>
+            <div style={{fontSize:13,fontWeight:700,color:"var(--dk)",marginBottom:14}}>Répartition des notes</div>
+            {[5,4,3,2,1].map(n=>{
+              const cnt=myRevs.filter(r=>Math.round(r.rating)===n).length;
+              const pct=reviewCount>0?Math.round(cnt/reviewCount*100):0;
+              return <div key={n} style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                <span style={{fontSize:12,color:"var(--g)",width:20,textAlign:"right",flexShrink:0}}>{n}★</span>
+                <div style={{flex:1,height:6,background:"var(--bgw)",borderRadius:3,overflow:"hidden"}}>
+                  <div style={{width:`${pct}%`,height:"100%",background:"#f59e0b",borderRadius:3,transition:"width 1s ease"}}/>
+                </div>
+                <span style={{fontSize:11,color:"#9ca3af",width:20}}>{cnt}</span>
+              </div>;
+            })}
+          </div>
+          {/* Review cards */}
+          <div style={{display:"flex",flexDirection:"column",gap:0}}>
+            {myRevs.map((r,i)=>{
+              const initials=(r.fromUserName||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+              const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}):"";
+              return <div key={r.id} style={{background:"var(--w)",borderRadius:16,padding:"18px 20px",border:"1px solid var(--bd)",boxShadow:"0 1px 8px rgba(0,0,0,0.06)",marginBottom:10,animation:`scaleIn 0.4s ${i*0.08}s both`}}>
+                <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:10}}>
+                  <div style={{width:40,height:40,borderRadius:"50%",background:colors[i%colors.length],display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:14,flexShrink:0}}>{initials}</div>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                      <div>
+                        <span style={{fontSize:14,fontWeight:700,color:"var(--dk)"}}>{r.fromUserName}</span>
+                        {r.itemTitle&&<div style={{fontSize:11,color:"var(--g)",marginTop:1}}>{r.itemTitle}</div>}
+                      </div>
+                      <span style={{fontSize:11,color:"var(--g)",flexShrink:0,marginLeft:8}}>{dateStr}</span>
+                    </div>
+                    <div style={{marginTop:4}}>{Array.from({length:r.rating||0}).map((_,si)=><span key={si} style={{color:"#f59e0b",fontSize:13}}>★</span>)}{Array.from({length:Math.max(0,5-(r.rating||0))}).map((_,si)=><span key={si} style={{color:"#e5e7eb",fontSize:13}}>★</span>)}</div>
+                  </div>
+                </div>
+                <p style={{fontSize:13,color:"var(--g)",lineHeight:1.65,margin:0}}>"{r.text}"</p>
+              </div>;
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ========== MAIN APP ========== */
 
 
@@ -5327,7 +5555,10 @@ function App(){
     {page==="profile"&&state.user&&<div className="sb-layout"><Sidebar page={page} setPage={setPage} setProfTab={setProfTab} profTab={profTab} state={state} dispatch={dispatch}/><div className="sb-main"><Profile state={state} dispatch={dispatch} setPage={setPage} setSelected={openDetail} initTab={profTab} onEditItem={(item)=>{setEditItem(item);setPage("create");}}/></div></div>}
     {page==="messages"&&state.user&&<div className="sb-layout sb-layout-h"><Sidebar page={page} setPage={setPage} setProfTab={setProfTab} profTab={profTab} state={state} dispatch={dispatch}/><div className="sb-main"><Messages state={state} dispatch={dispatch} cid={cid} setCid={setCid} setPage={setPage}/></div></div>}
     {page==="create"&&state.user&&<div className="sb-layout"><Sidebar page={page} setPage={setPage} setProfTab={setProfTab} profTab={profTab} state={state} dispatch={dispatch}/><div className="sb-main"><CreateListing state={state} dispatch={dispatch} setPage={(p)=>{setEditItem(null);setPage(p);}} mode={mode} editItem={editItem}/></div></div>}
-    {(page==="create"||page==="profile"||page==="messages"||page==="dashboard"||page==="referral"||page==="verify"||page==="dispute"||page==="wallet"||page==="badges")&&!state.user&&<div className="empty" style={{paddingTop:100}}><span>🔒</span><h2>Connectez-vous</h2><p>Vous devez être connecté pour accéder à cette page.</p><button className="bp" style={{marginTop:14}} onClick={()=>setShowA("login")}>Se connecter</button></div>}
+    {page==="favoris"&&state.user&&<div className="sb-layout"><Sidebar page={page} setPage={setPage} setProfTab={setProfTab} profTab={profTab} state={state} dispatch={dispatch}/><div className="sb-main" style={{display:"flex"}}><FavorisPage state={state} dispatch={dispatch} setPage={setPage} setSelected={openDetail}/></div></div>}
+    {page==="reservations"&&state.user&&<div className="sb-layout"><Sidebar page={page} setPage={setPage} setProfTab={setProfTab} profTab={profTab} state={state} dispatch={dispatch}/><div className="sb-main" style={{display:"flex"}}><ReservationsPage state={state} dispatch={dispatch} setPage={setPage}/></div></div>}
+    {page==="avis"&&state.user&&<div className="sb-layout"><Sidebar page={page} setPage={setPage} setProfTab={setProfTab} profTab={profTab} state={state} dispatch={dispatch}/><div className="sb-main" style={{display:"flex"}}><AvisPage state={state}/></div></div>}
+    {(page==="create"||page==="profile"||page==="messages"||page==="dashboard"||page==="referral"||page==="verify"||page==="dispute"||page==="wallet"||page==="badges"||page==="favoris"||page==="reservations"||page==="avis")&&!state.user&&<div className="empty" style={{paddingTop:100}}><span>🔒</span><h2>Connectez-vous</h2><p>Vous devez être connecté pour accéder à cette page.</p><button className="bp" style={{marginTop:14}} onClick={()=>setShowA("login")}>Se connecter</button></div>}
 
     {page==="home"&&<footer id="site-footer" style={{background:"#0f0b2b",marginTop:0,paddingBottom:0}}>
       {/* Transition */}
